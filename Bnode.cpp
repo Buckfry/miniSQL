@@ -16,3 +16,10 @@ Bnode::~Bnode() {
 	// TODO Auto-generated destructor stub
 }
 
+int main(void)
+{
+
+	string s= "hello";
+	cout << s[0];
+	return 0;
+}

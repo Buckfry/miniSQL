@@ -7,6 +7,8 @@
 
 #ifndef BNODE_H_
 #define BNODE_H_
+#include<iostream>
+using namespace std;
 
 class Bnode {
 public:
