@@ -1,7 +1,7 @@
 /*
  * block.h
  *
- *  Created on: 2014��11��3��
+ *  Created on: 2014��11��3��
  *      Author: Administrator
  */
 
@@ -10,15 +10,22 @@
 #include<iostream>
 using namespace std;
 
+#define BLOCK_LEN			4096	// the size of one block
+
+//决定不要filetype了，效率变低了，能实现就好，所以张卉和李屹淳协调下，文件名不要设一样的
 class block {
 public:
-	int length;//16kb or 4096kb
-	string id;//block's id
-	char* data;//string or char*
+	int blockNum;//block在文件中的顺序
+	string fileName;
+	int len;
+	char data[BLOCK_LEN];//string or char*
+	int iTime;//for LRU
 	block();
 	virtual ~block();
+	initial();
 private:
-	bool pinned;
+	bool pin;
 	bool dirty;
+	bool writen;
 };
 #endif /* BLOCK_H_ */

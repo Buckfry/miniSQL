@@ -1,7 +1,7 @@
 /*
  * block.cpp
  *
- *  Created on: 2014Äê11ÔÂ3ÈÕ
+ *  Created on: 2014ï¿½ï¿½11ï¿½ï¿½3ï¿½ï¿½
  *      Author: Administrator
  */
 
@@ -9,10 +9,20 @@
 
 block::block() {
 	// TODO Auto-generated constructor stub
-
+	this->initial();
 }
 
 block::~block() {
 	// TODO Auto-generated destructor stub
+}
+void initial(){
+	blockNum=-1;
+	data=NULL;
+	fileName="";
+	iTime=0;
+	dirty=false;
+	pin=0;
+	writen=false;
+
 }
 
