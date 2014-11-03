@@ -10,6 +10,7 @@
 
 #include<iostream>
 #include<string>
+#include"Public_struct.h";
 using namespace std;
 
 //释放数据库的内存缓冲区
