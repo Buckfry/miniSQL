@@ -1,7 +1,7 @@
 /*
  * sql.h
  *
- *  Created on: 2014Äê11ÔÂ3ÈÕ
+ *  Created on: 2014å¹´11æœˆ3æ—¥
  *      Author:
  */
 
@@ -19,24 +19,24 @@ using namespace std;
 
 
 class SQL {
-	public:
-	SqlMethod       method;			//Óï¾äÖ´ĞĞµÄ·½·¨
+public:
+	SqlMethod       method;			//è¯­å¥æ‰§è¡Œçš„æ–¹æ³•
 
-	private:
-	int             argc;				//Óï¾äÖĞ²ÎÊıµÄÊıÄ¿
-    string          targetName;		//Óï¾äµÄÄ¿±ê±íÃû/Êı¾İ¿âÃû/Ë÷ÒıÃû
+private:
+	int             argc;				//è¯­å¥ä¸­å‚æ•°çš„æ•°ç›®
+    string          targetName;		//è¯­å¥çš„ç›®æ ‡è¡¨å/æ•°æ®åº“å/ç´¢å¼•å
 
-	public:
-	 vector < string > argv;			//Óï¾äÖĞµÄ²ÎÊı
-	 vector < string > value;			//Óï¾äÖĞ²ÎÊı¶ÔÓ¦µÄÊıÖµ
-	 vector < string > result;			//selectÓï¾äÖĞÑ¡Ôñ´òÓ¡µÄÊôĞÔ
-	 vector < Operator > operators;		//whereÖĞµÄ·ûºÅ
-	 vector < LogicalOperator > logicalOperators;//whereÖĞµÄÂß¼­£¬Ä¿Ç°Ö»Ö§³Öand
-	 vector < Type > types;			//create tableÊ±µÄÀàĞÍ²ÎÊı
-	 vector < string >& aux;			//create tableÊ±µÄcharµÄÊıÖµ
-	 vector < int > isUnique;			//create tableÄÄĞ©ÊÇunique
+public:
+	 vector < string > argv;			//è¯­å¥ä¸­çš„å‚æ•°
+	 vector < string > value;			//è¯­å¥ä¸­å‚æ•°å¯¹åº”çš„æ•°å€¼
+	 vector < string > result;			//selectè¯­å¥ä¸­é€‰æ‹©æ‰“å°çš„å±æ€§
+	 vector < Operator > operators;		//whereä¸­çš„ç¬¦å·
+	 vector < LogicalOperator > logicalOperators;//whereä¸­çš„é€»è¾‘ï¼Œç›®å‰åªæ”¯æŒand
+	 vector < Type > types;			//create tableæ—¶çš„ç±»å‹å‚æ•°
+	 vector < string >& aux;			//create tableæ—¶çš„charçš„æ•°å€¼
+	 vector < int > isUnique;			//create tableå“ªäº›æ˜¯unique
 
-	public:
+public:
 	  int getargc();
 	  string gettargetName();
 
@@ -81,9 +81,7 @@ enum Type {
     FLOAT,
     WITHARGUMENT,
     CHAR ,
-    INT_PRIMARY ,  //±íÊ¾¸ÃÀàĞÍÊÇprimary key
-    FLOAT_PRIMARY ,
-    CHAR_PRIMARY ,
+
 };
 #endif // _SQL_H_
 
