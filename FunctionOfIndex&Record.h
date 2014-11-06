@@ -51,7 +51,6 @@ vector<string> delete_index(search_info info);//find the position
 attribute_info& createindex_record(string tablename, string atbname);
 
 vector<string> search_with_index(vector<string> position);
-vector<string> search_with_someindex(vector<string> position,search_info info);
 vector<string> search_without_index(search_info info);
 
 void insert_record(vector<string> values);
