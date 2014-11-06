@@ -24,8 +24,9 @@ class search_info
 public:
 	string tablename;
 	string atbname;//attribute name
-	string condition;// = or <= or >= or < or >
-	string value;
+	vector<string> condition;// = or <= or >= or < or >
+	vector<string> value;
+	vector<string> logic;//"and" or "or"
 };
 
 //Function for Index
