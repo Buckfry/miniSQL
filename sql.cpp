@@ -1,18 +1,12 @@
 /*
  * sql.cpp
  *
- *  Created on: 2014Äê11ÔÂ3ÈÕ
+ *  Created on: 2014ï¿½ï¿½11ï¿½ï¿½3ï¿½ï¿½
  *      Author: Even
  */
 
 #include "sql.h"
 
-int SQL::getargc(){
-	return argc;
-}
 
-string SQL::gettargetName(){
-	return targetName;
-}
 
 
