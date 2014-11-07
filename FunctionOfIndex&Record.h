@@ -18,9 +18,13 @@ class location
 class attribute_info
 {
 public:
+	string table_name;
+	string attribute_name;
 	string type;//int, float or char
+	string index_name;
 	int lengh;//type's length(especially for char)
 	vector<string> data;
+	vector<string> position;
 };
 
 class search_info
@@ -28,15 +32,15 @@ class search_info
 public:
 	string tablename;
 	string atbname;//attribute name
+	string index_name;
 	vector<string> condition;// = or <= or >= or < or >
-	vector<string> value;
-	vector<string> logic;//"and" or "or"
+	vector<location> value;
 };
 
 //Function for Index
 ///////////////////////////////////////////////////////////////////////
 //API to index
-void createindex_index(attribute_info atb_info,string indexname);
+void createindex_index(attribute_info info);
 //throw exception "createindex_error"
 
 void dropindex(string indexname);
@@ -45,7 +49,7 @@ void dropindex(string indexname);
 vector<location> searchbyindex(search_info info);//return the position
 //throw exception "not_find"
 
-void insert_index(search_info info);//find the position
+void insert_index(attribute_info info);
 //throw exception "insertindex_error"
 
 vector<location> delete_index(search_info info);//find the position
@@ -59,11 +63,11 @@ vector<location> delete_index(search_info info);//find the position
 attribute_info& createindex_record(string tablename, string atbname);
 //throw exception "getcolumn_error"
 
-vector<string> search_with_index(vector<string> position);
+vector<string> search_with_index(vector<string> position,search_info info);
 vector<string> search_without_index(search_info info);
 //throw exception "not_find"
 
-void insert_record(vector<string> values);
+attribute_info& insert_record(vector<string> values);//返回插入成功后的数据所在位置
 //throw exception "insertdata_error"
 
 void delete_record_withindex(vector<string> values,location position);
@@ -71,7 +75,8 @@ void detele_record_withoutindex(vector<string> values);
 //throw exception "deletedata_error"
 
 void create_table(string tablename,vector<string> attribute_name,vector<string> attribute_type,
-		vector<int> attribute_length,string primarykey);
+			vector<int> attribute_length,vector<string> attribute_property);//这里的attribute_property是指attribute
+																	//是primary key还是unique或者什么都不是
 //throw exception "createtable_error"
 
 void drop_table(string tablename);

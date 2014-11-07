@@ -22,6 +22,7 @@ class not_find{};
 class insertindex_error{};
 class deleteindex_error{};
 class createindex_error{};
+class not_unique{};//建立索引时，对应的属性不是unique，从而建立索引失败
 class dropindex_error{};
 
 //record

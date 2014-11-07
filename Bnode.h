@@ -8,8 +8,9 @@
 #ifndef BNODE_H_
 #define BNODE_H_
 #include<iostream>
-#include<FunctionOfIndex&Record.h>
+#include"FunctionOfIndex&Record.h";
 using namespace std;
+
 
 class Bnode {
 public:
@@ -22,12 +23,33 @@ public:
 	string father;
 	string next;
 
+	void insert(attribute_info attribute);
+
+
 public:
-	string search1(attribute_info atb_info);
-	vector<string> search2(attribute_info atb_info);
-	vector<string> search3(attribute_info atb_info);
+	string search(attribute_info atb_info);
 
 
+};
+
+class Binfo
+{
+public:
+	int length=0;
+	string indexname="";
+	string firstleaf="";//第一个叶节点位置，4字节长
+	string empty="";//第一个空块位置，4字节长
+	Binfo(string data)
+	{
+		int i;
+		for(i=0;i<4;i++)
+		{
+			length+=(data[i]-'0')*10;
+		}
+		indexname = data.substr(4,8);
+		firstleaf = data.substr(8,12);
+		empty = data.substr(12,16);
+	}
 };
 
 #endif /* BNODE_H_ */
