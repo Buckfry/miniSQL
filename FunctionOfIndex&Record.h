@@ -11,6 +11,10 @@
 #include<vector>
 
 using namespace std;
+class location
+{
+
+};
 class attribute_info
 {
 public:
@@ -33,16 +37,19 @@ public:
 ///////////////////////////////////////////////////////////////////////
 //API to index
 void createindex_index(attribute_info atb_info,string indexname);
+//throw exception "createindex_error"
 
 void dropindex(string indexname);
+//throw exception "dropindex_error"
 
-vector<string> searchbyindex(search_info info);//return the position
+vector<location> searchbyindex(search_info info);//return the position
+//throw exception "not_find"
 
 void insert_index(search_info info);//find the position
-//throw exception "insert_error"
+//throw exception "insertindex_error"
 
-vector<string> delete_index(search_info info);//find the position
-//throw exception "delete_error"
+vector<location> delete_index(search_info info);//find the position
+//throw exception "deleteindex_error"
 
 
 
@@ -50,16 +57,18 @@ vector<string> delete_index(search_info info);//find the position
 //////////////////////////////////////////////////////////////////////
 //API to record
 attribute_info& createindex_record(string tablename, string atbname);
+//throw exception "getcolumn_error"
 
 vector<string> search_with_index(vector<string> position);
 vector<string> search_without_index(search_info info);
+//throw exception "not_find"
 
 void insert_record(vector<string> values);
-//throw exception "insert_error"
+//throw exception "insertdata_error"
 
-void delete_record_withindex(vector<string> values,string position);
+void delete_record_withindex(vector<string> values,location position);
 void detele_record_withoutindex(vector<string> values);
-//throw exception "delete_error"
+//throw exception "deletedata_error"
 
 void create_table(string tablename,vector<string> attribute_name,vector<string> attribute_type,
 		vector<int> attribute_length,string primarykey);
