@@ -67,7 +67,7 @@ vector<string> search_with_index(vector<string> position,search_info info);
 vector<string> search_without_index(search_info info);
 //throw exception "not_find"
 
-attribute_info& insert_record(vector<string> values);//返回插入成功后的数据所在位置
+vector<attribute_info> insert_record(vector<string> values);//返回插入成功后的数据所在位置
 //throw exception "insertdata_error"
 
 void delete_record_withindex(vector<string> values,location position);

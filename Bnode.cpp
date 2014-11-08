@@ -1,7 +1,7 @@
 /*
  * Bnode.cpp
  *
- *  Created on: 2014Äê11ÔÂ2ÈÕ
+ *  Created on: 2014ï¿½ï¿½11ï¿½ï¿½2ï¿½ï¿½
  *      Author: Administrator
  */
 
@@ -16,10 +16,37 @@ Bnode::~Bnode() {
 	// TODO Auto-generated destructor stub
 }
 
-int main(void)
+//class attribute_info
+//{
+//public:
+//	string table_name;
+//	string attribute_name;
+//	string type;//int, float or char
+//	string index_name;
+//	int lengh;//type's length(especially for char)
+//	vector<string> data;
+//	vector<string> position;
+//};
+//
+//class search_info
+//{
+//public:
+//	string tablename;
+//	string atbname;//attribute name
+//	string index_name;
+//	vector<string> condition;// = or <= or >= or < or >
+//	vector<location> value;
+//};
+void Bnode::createindex_index(attribute_info info)
 {
+	char data[32];
+	int i=0;
+	for(;i<4;i++)
+	{
+		data[i]='0';
+	}
+	for(;i<8;i++)
+	{
 
-	string s= "hello";
-	cout << s[0];
-	return 0;
+	}
 }

@@ -11,6 +11,31 @@
 #include"FunctionOfIndex&Record.h";
 using namespace std;
 
+//class location
+//{
+//
+//};
+//class attribute_info
+//{
+//public:
+//	string table_name;
+//	string attribute_name;
+//	string type;//int, float or char
+//	string index_name;
+//	int lengh;//type's length(especially for char)
+//	vector<string> data;
+//	vector<string> position;
+//};
+//
+//class search_info
+//{
+//public:
+//	string tablename;
+//	string atbname;//attribute name
+//	string index_name;
+//	vector<string> condition;// = or <= or >= or < or >
+//	vector<location> value;
+//};
 
 class Bnode {
 public:
@@ -22,12 +47,10 @@ public:
 	vector<string> pointer;
 	string father;
 	string next;
-
-	void insert(attribute_info attribute);
-
-
 public:
 	string search(attribute_info atb_info);
+	void insert(attribute_info attribute);
+	void createindex_index(attribute_info info);
 
 
 };
