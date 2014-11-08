@@ -15,68 +15,94 @@ class location
 {
 
 };
-class attribute_info
-{
+//位置信息
+
+class create_record{
 public:
 	string table_name;
-	string attribute_name;
-	string type;//int, float or char
+	vector<string> attribute_name;//属性名
+	vector<string> attribute_type;//属性类型
+	vector<string> attribute_length;//属性长度
+	vector<string> values;
+};
+
+class create_index_info
+{
+public:
 	string index_name;
 	int lengh;//type's length(especially for char)
+	string attribute_name;
+	string type;//int, float or char
 	vector<string> data;
 	vector<string> position;
 };
+
+class update_index_info
+{
+public:
+	string index_name;//由api赋值
+	string value;//数据的值
+	location loc;//数据所在位置
+};
+
 
 class search_info
 {
 public:
 	string tablename;
-	string atbname;//attribute name
 	string index_name;
 	vector<string> condition;// = or <= or >= or < or >
-	vector<location> value;
+	vector<string> attribute_name;//attribute name
+	vector<string> value;
 };
+
+class search_result
+{
+public:
+	vector<string> value;
+};//一个search_result即为一条查询结果
 
 //Function for Index
 ///////////////////////////////////////////////////////////////////////
 //API to index
-void createindex_index(attribute_info info);
+void createindex_index(create_index_info info);
 //throw exception "createindex_error"
 
 void dropindex(string indexname);
 //throw exception "dropindex_error"
 
-vector<location> searchbyindex(search_info info);//return the position
+location searchbyindex(search_info info);//返回位置信息
 //throw exception "not_find"
 
-void insert_index(attribute_info info);
+void insert_index(update_index_info info);
 //throw exception "insertindex_error"
 
-vector<location> delete_index(search_info info);//find the position
+location delete_index(search_info info);//find the position
+void delete_index(update_index_info);
 //throw exception "deleteindex_error"
-
 
 
 
 //////////////////////////////////////////////////////////////////////
 //API to record
-attribute_info& createindex_record(string tablename, string atbname);
+create_index_info& createindex_record(string tablename, string atbname);//create index前调用此函数
+//因为create index时需要向record获得某属性所有的数据和位置信息
 //throw exception "getcolumn_error"
 
-vector<string> search_with_index(vector<string> position,search_info info);
-vector<string> search_without_index(search_info info);
+vector<search_result> search_with_index(location loc,search_info info);
+vector<search_result> search_without_index(search_info info);
 //throw exception "not_find"
 
-vector<attribute_info> insert_record(vector<string> values);//返回插入成功后的数据所在位置
+update_index_info insert_record(string table_name,vector<string> attribute_index,
+								vector<string> values);//返回插入成功后的数据所在位置
 //throw exception "insertdata_error"
 
-void delete_record_withindex(vector<string> values,location position);
-void detele_record_withoutindex(vector<string> values);
+void delete_record_withindex(location loc);
+vector<update_index_info> detele_record_withoutindex(search_info info);
 //throw exception "deletedata_error"
 
-void create_table(string tablename,vector<string> attribute_name,vector<string> attribute_type,
-			vector<int> attribute_length,vector<string> attribute_property);//这里的attribute_property是指attribute
-																	//是primary key还是unique或者什么都不是
+
+void create_table(create_record data);
 //throw exception "createtable_error"
 
 void drop_table(string tablename);
