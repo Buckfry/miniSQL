@@ -11,6 +11,8 @@
 #include"string.h"
 #include"BufferManager.h"
 #include<iterator>
+#include<algorithm>
+#include<bitset>
 
 
 
@@ -84,7 +86,7 @@ void RecordManager::create_table(string DB_name,create_record data)
 
 
 //向表中插入元组
-void RecordManager::insert_record(string filename,vector<char> attr)
+void RecordManager::insert_record(string DB_name,string filename,vector<char> attr)
 {
 	this->focus_current_db(DB_name);
     getfileinfo(databuffer.getFileInfo(filename));
@@ -119,122 +121,260 @@ void RecordManager::insert_record(string filename,vector<char> attr)
 
 }
 
-//选择语句（无where）
-void RecordManager::Select_No_Where(string DB_Name,string filename,vector<char> attr)
+//打印属性
+void RecordManager::Print(vector<char> attr)
 {
-
-
-
-
-//	int m_fileType =0; //文件
-//	int num=0; //blockNum
-//	Print_Head(print,count);//打印头
-//	while(1)
-//	{
-//		blockInfo* tempb = readBlock(DB_Name, Table_Name, num , m_fileType);
-//		if(tempb->charNum>0) //若该块有数据
-//		{
-//			int start=0;
-//			int end;
-//			string tempst = tempb->cBlock;
-//			while((end = tempst.Find(';',start))!=-1)
-//			{
-//				string temps = tempst.Mid(start,end-start+1); //取出一条record
-//				start=end+1;
-//				if(temps.GetAt(0)==' ')
-//					continue;
-//				Print_To_Screen(temps,print,count); //输出该record
-//			}
-//			num++; //到下一块
-//			continue;
-//		}
-//		else //若已经到了空块
-//		{
-//			return;
-//		}
-//	}
-//	return;
-}
-
-//打印选择属性
-void RecordManager::Print_Head(vector<char> attrname)
-{
-	for(vector<char>::iterator it=attrname.begin();it!=attrname.end();it++)
+	for(vector<char>::iterator it=attr.begin();it!=attr.end();it++)
 	{
 		cout<<"\t"<<*it;
 	}
 	cout<<endl;
 }
 
-//打印出选择结果
-void RecordManager::Print_To_Screen(vector<char> attr)
+//找出所查找的属性在record中的位置
+vector<int>& RecordManager::findposition(vector<char>attr,vector<char>searchedattr)
 {
-
-}
-void RecordManager::Print_To_Screen(vector<char> attr)
-{
-	int start=0;
-	int end=-1;
-	string temps;
-	int flag=0;
-	record.Replace(';',',');
-	for(;;)
-	{
-		for(int i=0;i<count;i++)
-		{
-			end = record.Find(',',start);
-			temps = record.Mid(start,end-start);//打印去掉 ，的属性值
-			printf("%s\t",temps);
-			start=end+1;
-		}
-		printf("\n");
-		record = record.Mid(start);
-
-		flag = record.Find(',',0);
-		if(flag==-1)
-			break;
-		start=0;
-
-	}
-	//temps = record.Mid(start,record.GetLength()-start);
-
+	vector<int> selected_attr;
+    for(vector<char>::iterator it=searchedattr.begin();it!=searchedattr.end();it++)
+    {
+    	   vector<char>::iterator findit = find(attr.begin(),attr.end(),*it);
+    	   int num=0;
+           for(vector<char>::size_type n=findit-attr.begin();n--!=0;num++)
+           {
+        	   selected_attr.push_back(num);
+           }
+    }
+    return selected_attr;
 }
 
-//6.有where，但无可用索引的select语句
-void RecordManager::Select_Without_Useful_Cond(string DB_Name,string Table_Name,condition_info conds[10],int count,attr_info print[32],int Count,char cond)
+
+//选择语句（无where）
+void RecordManager::Select_No_Where(string DB_name,string filename,vector<char> attr)
 {
-	int m_fileType =0; //文件
-	int num=0; //blockNum
-	Print_Head(print,Count);//打印头
-	while(1)
+	this->focus_current_db(DB_name);
+    getfileinfo(databuffer.getFileInfo(filename));
+    block datablock;
+    vector<int> attrnum(findposition(fi.attribute_name,attr));
+
+
+    for(int searchblock=0;searchblock!=MAX_BLOCK;searchblock++)
+    {
+    	datablock(*(databuffer.readBlock(filename,searchblock)));
+    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
+    	{
+    		vector<char> attrvalue;
+    		for(vector<char>::iterator it=attrnum.begin();it!=attrnum.end();it++)
+    		{
+    			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
+    		}
+    		this->Print(attrvalue);
+    	}
+    }
+
+}
+
+bool RecordManager::Confirm(vector<char> attr,vector<char> attrvalue, condition_info condition)
+{
+	 vector<int> conditionattrnum(findposition(attr,condition.conditionattr));
+	 vector<int> conditionattrtypenum(findposition(fi.attribute_name,condition.conditionattr));
+	 vector<char>::iterator it;
+	 int i=0;
+	for(it=conditionattrnum.begin();it!=conditionattrnum.end();it++,i++)
 	{
-		blockInfo* tempb = readBlock(DB_Name, Table_Name, num , m_fileType);
-		if(tempb->charNum>0) //若该块有数据
+		//得到所比较属性的类型fi.attribute_type[*it]
+		//得到左比较值attr[*it]，进行比较
+		switch(condition.condition[i]) //比较条件
 		{
-			int start=0;
-			int end;
-			string tempst = tempb->cBlock;
-			while((end = tempst.Find(';',start))!=-1)
+		case 0: // ‘=’
 			{
-				string temps = tempst.Mid(start,end-start+1); //取出一条record
-				start=end+1;
-				if(temps.GetAt(0)==' ')
-					continue;
-				int res = Confirm_To_Where(temps,conds,count,cond); //条件判断
-				if(res==1)
-					Print_To_Screen(temps,print,Count); //输出该record
-				else
-					continue;
+				if(fi.attribute_type[*it]=='int')
+				{
+					int i1 = (int)attr[*it];
+					int i2 = (int)condition.comparedvalue;
+					if(i1==i2) continue;
+					else return 0;
+				}
+				else if(fi.attribute_type[*it] == 'char')
+				{
+					char *p1 = (LPSTR)(LPCTSTR)attr[*it];
+					char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
+					if(!strcmp(p1,p2)) continue;
+					else  return 0;
+				}
+				else if(fi.attribute_type[*it] == 'float')
+				{
+					float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
+					float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
+					if(f1==f2) continue;
+					else  return 0;
+				}
+
 			}
-			num++; //到下一块
-			continue;
-		}
-		else //若已经到了空块
+			break;
+		case 1://‘<>’
 		{
-			return;
+			if(fi.attribute_type[*it]=='int')
+			{
+				int i1 = (int)attr[*it];
+				int i2 = (int)condition.comparedvalue;
+				if(i1!=i2) continue;
+				else return 0;
+			}
+			else if(fi.attribute_type[*it] == 'char')
+			{
+				char *p1 = (LPSTR)(LPCTSTR)attr[*it];
+				char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
+				if(strcmp(p1,p2)) continue;
+				else  return 0;
+			}
+			else if(fi.attribute_type[*it] == 'float')
+			{
+				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
+				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
+				if(f1!=f2) continue;
+				else  return 0;
+			}
+
+		}
+		    break;
+
+		case 2: // '<'
+			{
+				if(fi.attribute_type[*it]=='int')
+				{
+					int i1 = (int)attr[*it];
+					int i2 = (int)condition.comparedvalue;
+					if(i1<i2) continue;
+					else return 0;
+				}
+				else if(fi.attribute_type[*it] == 'char')
+				{
+					char *p1 = (LPSTR)(LPCTSTR)attr[*it];
+					char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
+					if(strcmp(p1,p2)<0) continue;
+					else  return 0;
+				}
+				else if(fi.attribute_type[*it] == 'float')
+				{
+					float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
+					float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
+					if(f1<f2) continue;
+					else  return 0;
+				}
+
+			}
+			break;
+		case 3: // '>'
+		{
+			if(fi.attribute_type[*it]=='int')
+			{
+				int i1 = (int)attr[*it];
+				int i2 = (int)condition.comparedvalue;
+				if(i1>i2) continue;
+				else return 0;
+			}
+			else if(fi.attribute_type[*it] == 'char')
+			{
+				char *p1 = (LPSTR)(LPCTSTR)attr[*it];
+				char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
+				if(strcmp(p1,p2)>0) continue;
+				else  return 0;
+			}
+			else if(fi.attribute_type[*it] == 'float')
+			{
+				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
+				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
+				if(f1>f2) continue;
+				else  return 0;
+			}
+
+		}
+		    break;
+
+		case 4: // '<='
+		{
+			if(fi.attribute_type[*it]=='int')
+			{
+				int i1 = (int)attr[*it];
+				int i2 = (int)condition.comparedvalue;
+				if(i1<=i2) continue;
+				else return 0;
+			}
+			else if(fi.attribute_type[*it] == 'char')
+			{
+				char *p1 = (LPSTR)(LPCTSTR)attr[*it];
+				char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
+				if(strcmp(p1,p2)<=0) continue;
+				else  return 0;
+			}
+			else if(fi.attribute_type[*it] == 'float')
+			{
+				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
+				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
+				if(f1<=f2) continue;
+				else  return 0;
+			}
+
+		}
+			break;
+		case 5: // '>='
+		{
+			if(fi.attribute_type[*it]=='int')
+			{
+				int i1 = (int)attr[*it];
+				int i2 = (int)condition.comparedvalue;
+				if(i1>=i2) continue;
+				else return 0;
+			}
+			else if(fi.attribute_type[*it] == 'char')
+			{
+				char *p1 = (LPSTR)(LPCTSTR)attr[*it];
+				char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
+				if(strcmp(p1,p2)>=0) continue;
+				else  return 0;
+			}
+			else if(fi.attribute_type[*it] == 'float')
+			{
+				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
+				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
+				if(f1>=f2) continue;
+				else  return 0;
+			}
+
+		}
+			break;
+		default:
+			{cout<<"An error in record_200+ condition"<<endl;
+			exit(1);}
 		}
 	}
-	return;
+		return 1;
+}
+
+
+//有where，但无可用索引的select语句
+void RecordManager::Select_Without_Useful_Cond(string DB_name,string filename,vector<char> attr,condition_info cond)
+{
+	this->focus_current_db(DB_name);
+    getfileinfo(databuffer.getFileInfo(filename));
+    block datablock;
+    vector<int> attrnum(findposition(fi.attribute_name,attr));
+
+
+    for(int searchblock=0;searchblock!=MAX_BLOCK;searchblock++)
+    {
+    	datablock(*(databuffer.readBlock(filename,searchblock)));
+    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
+    	{
+    		vector<char> attrvalue;
+    		for(vector<char>::iterator it=attrnum.begin();it!=attrnum.end();it++)
+    		{
+    			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
+    		}
+    		if(this->Confirm(attr,attrvalue,cond))
+    		this->Print(attrvalue);
+    	}
+    }
 }
 //7.有where且有可用索引的select 语句
 void RecordManager::Select_With_Useful_Cond(string DB_Name,string Table_Name,condition_info conds[10],int count,attr_info print[32],int Count,char cond, int num, index_info  node)
@@ -384,210 +524,8 @@ void Select_With_Smaller_Cond(string DB_Name,string Table_Name,condition_info co
 }
 
 
-//11.判断是否符合where条件组
-bool Confirm_To_Where(string record,condition_info conds[10],int count,char cond)
-{
-	for(int i=0;i<count;i++)
-	{
-		int res = Confirm(record,conds[i]);
-		if(res == 0) return 0;
-	}
-	return 1;
-}
 
 //12.判断是否符合某个指定条件
-bool Confirm(string record,condition_info condition)
-{
-	int start=0;
-	int end=-1;
-	string temps,temps1;
-
-	int index = record.GetLength();
-	record.SetAt(index-1,','); //把末位: 替换成 ;
-	//取得左比较值
-	for(int i=0;i<condition.left_offset+1;i++)
-	{
-		start=end+1;
-		end = record.Find(',',start);
-	}
-	temps = record.Mid(start,end-start); //获得第left_offset个属性值
-
-	//取得右比较值
-	if(condition.right_type=='t') //若属性值和 常量比较
-	{
-		temps1 = condition.const_data;
-	}
-	else
-	{
-		start=0;
-		end=-1;
-		for(int i=0;i<condition.right_offset;i++)
-		{
-			start=end+1;
-			end = record.Find(',',start);
-		}
-		temps1 = record.Mid(start,end-start); //获得第right_offset个属性值
-	}
-	//进行比较
-	switch(condition.condition) //比较条件
-	{
-	case 0: // ‘=’
-		{
-			if(condition.left_type=='i') //比较类型
-			{
-				int i1 = atoi(temps);
-				int i2 = atoi(temps1);
-				if(i1==i2) return 1;
-				else return 0;
-			}
-			else if(condition.left_type == 'c')
-			{
-				char *p1 = (LPSTR)(LPCTSTR)temps;
-				char *p2 = (LPSTR)(LPCTSTR)temps1;
-				if(!strcmp(p1,p2)) return 1;
-				else  return 0;
-			}
-			else if(condition.left_type == 'f')
-			{
-				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps);
-				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps1);
-				if(f1==f2) return 1;
-				else  return 0;
-			}
-		}
-		break;
-	case 1: // ‘<>’
-		{
-			if(condition.left_type=='i')
-			{
-				int i1 = atoi(temps);
-				int i2 = atoi(temps1);
-				if(i1!=i2) return 1;
-				else return 0;
-			}
-			else if(condition.left_type == 'c')
-			{
-				char *p1 = (LPSTR)(LPCTSTR)temps;
-				char *p2 = (LPSTR)(LPCTSTR)temps1;
-				if(strcmp(p1,p2)) return 1;
-				else  return 0;
-			}
-			else if(condition.left_type == 'f')
-			{
-				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps);
-				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps1);
-				if(f1!=f2) return 1;
-				else  return 0;
-			}
-		}
-		break;
-	case 2: // '<'
-		{
-			if(condition.left_type=='i')
-			{
-				int i1 = atoi(temps);
-				int i2 = atoi(temps1);
-				if(i1<i2) return 1;
-				else return 0;
-			}
-			else if(condition.left_type == 'c')
-			{
-				char *p1 = (LPSTR)(LPCTSTR)temps;
-				char *p2 = (LPSTR)(LPCTSTR)temps1;
-				if(strcmp(p1,p2)<0) return 1;
-				else  return 0;
-			}
-			else if(condition.left_type == 'f')
-			{
-				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps);
-				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps1);
-				if(f1<f2) return 1;
-				else  return 0;
-			}
-
-		}
-		break;
-	case 3: // '>'
-		{
-			if(condition.left_type=='i')
-			{
-				int i1 = atoi(temps);
-				int i2 = atoi(temps1);
-				if(i1>i2) return 1;
-				else return 0;
-			}
-			else if(condition.left_type == 'c')
-			{
-				char *p1 = (LPSTR)(LPCTSTR)temps;
-				char *p2 = (LPSTR)(LPCTSTR)temps1;
-				if(strcmp(p1,p2)>0) return 1;
-				else  return 0;
-			}
-			else if(condition.left_type == 'f')
-			{
-				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps);
-				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps1);
-				if(f1>f2) return 1;
-				else  return 0;
-			}
-		}
-		break;
-	case 4: // '<='
-		{
-			if(condition.left_type=='i')
-			{
-				int i1 = atoi(temps);
-				int i2 = atoi(temps1);
-				if(i1<=i2) return 1;
-				else return 0;
-			}
-			else if(condition.left_type == 'c')
-			{
-				char *p1 = (LPSTR)(LPCTSTR)temps;
-				char *p2 = (LPSTR)(LPCTSTR)temps1;
-				if(strcmp(p1,p2)<=0) return 1;
-				else  return 0;
-			}
-			else if(condition.left_type == 'f')
-			{
-				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps);
-				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps1);
-				if(f1<=f2) return 1;
-				else  return 0;
-			}
-		}
-		break;
-	case 5: // '>='
-		{
-			if(condition.left_type=='i')
-			{
-				int i1 = atoi(temps);
-				int i2 = atoi(temps1);
-				if(i1>=i2) return 1;
-				else return 0;
-			}
-			else if(condition.left_type == 'c')
-			{
-				char *p1 = (LPSTR)(LPCTSTR)temps;
-				char *p2 = (LPSTR)(LPCTSTR)temps1;
-				if(strcmp(p1,p2)>=0) return 1;
-				else  return 0;
-			}
-			else if(condition.left_type == 'f')
-			{
-				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps);
-				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)temps1);
-				if(f1>=f2) return 1;
-				else  return 0;
-			}
-		}
-		break;
-	default:
-		{printf("An error in record_200+ condition %s",errno);
-		exit(1);}
-	}
-	return 0;
-}
 
 
 
