@@ -20,17 +20,22 @@ class location
 class create_record{
 public:
 	string table_name;
-	vector<string> attribute_name;//属性名
-	vector<string> attribute_type;//属性类型
-	vector<string> attribute_length;//属性长度
+	vector<char> attribute_name;//属性名
+	vector<char> attribute_type;//属性类型
+	vector<int> attribute_length;//属性长度(每个属性的字节数)
 
 };
 
 class record{
 public:
-	vector<string> values;
+	vector<char> values;
+	recordposition  rp;
 };
 
+class recordposition{
+	int    recordnum;
+	int    blocknum;
+};
 
 class create_index_info
 {
@@ -108,7 +113,7 @@ vector<update_index_info> detele_record_withoutindex(search_info info);
 //throw exception "deletedata_error"
 
 
-void create_table(create_record data);
+void create_table(string DB_name,create_record data);
 //throw exception "createtable_error"
 
 void drop_table(string tablename);

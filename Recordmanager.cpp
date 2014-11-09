@@ -10,12 +10,12 @@
 #include"block1.h"
 #include"string.h"
 #include"BufferManager.h"
+#include<iterator>
 
 
 
-int notfullblock=0;
 
-RecordManager::RecordManager(string DB_name) {
+RecordManager::RecordManager() {
 	// TODO Auto-generated constructor stub
 
 }
@@ -24,57 +24,154 @@ RecordManager::~RecordManager() {
 	// TODO Auto-generated destructor stub
 }
 
-//1.释放数据库的内存缓冲区
-void RecordManager::Close_Database()
+void RecordManager::focus_current_db(string DB_name)
 {
+	if(DB_name!=databuffer.DBname)
+					databuffer.setDatabase(DB_name);
+}
+
+
+
+//释放数据库的内存缓冲区
+void RecordManager::Close_Database(string DB_name)
+{
+	this->focus_current_db(DB_name);
         databuffer.closeDatabase();
 }
 
 
-//2.释放表或索引的内存缓冲区
-void RecordManager::Close_File(string filename)
+//释放表或索引的内存缓冲区
+void RecordManager::Close_File(string DB_name, string filename)
 {
+	if(DB_name!=databuffer.DBname)
+					databuffer.setDatabase(DB_name);
 	databuffer.closeFile(filename);
 }
-
-//3.向表中插入元组
-void RecordManager::Insert_Item(string Table_Name,string Attr)
+//不知道怎么存，先空着
+char* RecordManager::translate_fileinfo(record_fileInfo fi)
 {
-
-	while(1)
-	{
-		block* tempb = databuffer.;
-//				readBlock(DB_Name, Table_Name, notfullblock , m_fileType); //blockNum初定为0，
-		if((tempb->data)>=4096) //若有块满了，取下一块
-		{
-			notfullblock++;
-			continue;
-		}
-		else
-		{
-			recordoffset = strlen(tempb->cBlock);
-			recordoffset += notfullblock*10000;
-			strcat(tempb->cBlock,Attr);
-			tempb->charNum+=1;
-			tempb->dirtyBit=1;
-			AddRecord(DB_Name,Table_Name);
-			return;
-		}
-	}
-	return;
+	      char translate[FILEINFO_LEN];
+          return  &translate;
 }
 
-//4.打印选择属性
-void RecordManager::Print_Head(attr_info print[32],int count)
+//不知道怎么读，先空着
+void RecordManager::getfileinfo(char* fileinfo)
 {
-	for(int i=0;i<count;i++)
-	{
-		printf("%s\t",print[i].attr_name);
-	}
-	printf("\n");
+
+//把数组里的数据写到fi里面去
+
 }
-//5.打印出选择结果
-void RecordManager::Print_To_Screen(string record,attr_info print[32],int count)
+
+//在建表的时候初始化它的头文件信息
+void RecordManager::create_table(string DB_name,create_record data)
+{
+	this->focus_current_db(DB_name);
+
+	fi.fileName(data.table_name);
+	fi.recordLength(0);
+	fi.attribute_name(data.attribute_name);
+	fi.attribute_type(data.attribute_type);
+
+	for(vector<string>::iterator it=data.attribute_name.begin();it!= data.attribute_name.end();it++,fi.recordLength++);
+
+    fi.recordAmount(BLOCK_LEN/fi.recordLength);
+    fi.currentblocknum(1);
+    fi.recordcount(0);
+
+    databuffer.createTable(data.table_name,translate_fileinfo(this-> fi));
+
+}
+
+
+//向表中插入元组
+void RecordManager::insert_record(string filename,vector<char> attr)
+{
+	this->focus_current_db(DB_name);
+    getfileinfo(databuffer.getFileInfo(filename));
+    block datablock;
+
+     if(fi.recordcount>fi.recordAmount)
+     {
+    	 if(fi.currentblocknum>MAX_BLOCK)
+    		 throw("This table is filled, you cann't add this tulpe into it!");
+    	 else
+    	 {
+    		 fi.currentblocknum++;
+    		 fi.recordcount(0);
+    	 }
+
+     }
+
+
+    int i=fi.recordcount*fi.recordLength;
+    datablock(*(databuffer.readBlock(filename,(fi.currentblocknum-1))));
+
+    for(vector<char>::iterator it=attr.begin(); it!=attr.end();it++,i++)
+    {
+    	datablock.data[i]=*it;
+
+    }
+
+    fi.recordcount++;
+    char* p=&(datablock.data);
+    databuffer.insertBlock(filename,(fi.currentblocknum-1),p);
+    databuffer.updateFileInfo(filename,this->translate_fileinfo(fi));
+
+}
+
+//选择语句（无where）
+void RecordManager::Select_No_Where(string DB_Name,string filename,vector<char> attr)
+{
+
+
+
+
+//	int m_fileType =0; //文件
+//	int num=0; //blockNum
+//	Print_Head(print,count);//打印头
+//	while(1)
+//	{
+//		blockInfo* tempb = readBlock(DB_Name, Table_Name, num , m_fileType);
+//		if(tempb->charNum>0) //若该块有数据
+//		{
+//			int start=0;
+//			int end;
+//			string tempst = tempb->cBlock;
+//			while((end = tempst.Find(';',start))!=-1)
+//			{
+//				string temps = tempst.Mid(start,end-start+1); //取出一条record
+//				start=end+1;
+//				if(temps.GetAt(0)==' ')
+//					continue;
+//				Print_To_Screen(temps,print,count); //输出该record
+//			}
+//			num++; //到下一块
+//			continue;
+//		}
+//		else //若已经到了空块
+//		{
+//			return;
+//		}
+//	}
+//	return;
+}
+
+//打印选择属性
+void RecordManager::Print_Head(vector<char> attrname)
+{
+	for(vector<char>::iterator it=attrname.begin();it!=attrname.end();it++)
+	{
+		cout<<"\t"<<*it;
+	}
+	cout<<endl;
+}
+
+//打印出选择结果
+void RecordManager::Print_To_Screen(vector<char> attr)
+{
+
+}
+void RecordManager::Print_To_Screen(vector<char> attr)
 {
 	int start=0;
 	int end=-1;
@@ -492,38 +589,7 @@ bool Confirm(string record,condition_info condition)
 	return 0;
 }
 
-//13.选择语句（无where）
-void Select_No_Where(string DB_Name,string Table_Name,attr_info print[32],int count)
-{
-	int m_fileType =0; //文件
-	int num=0; //blockNum
-	Print_Head(print,count);//打印头
-	while(1)
-	{
-		blockInfo* tempb = readBlock(DB_Name, Table_Name, num , m_fileType);
-		if(tempb->charNum>0) //若该块有数据
-		{
-			int start=0;
-			int end;
-			string tempst = tempb->cBlock;
-			while((end = tempst.Find(';',start))!=-1)
-			{
-				string temps = tempst.Mid(start,end-start+1); //取出一条record
-				start=end+1;
-				if(temps.GetAt(0)==' ')
-					continue;
-				Print_To_Screen(temps,print,count); //输出该record
-			}
-			num++; //到下一块
-			continue;
-		}
-		else //若已经到了空块
-		{
-			return;
-		}
-	}
-	return;
-}
+
 
 //14.选择语句（有where）
 void Select_With_Where(string DB_Name,string Table_Name,condition_info conds[10],int count,char cond,attr_info print[32],int Count)
