@@ -23,8 +23,14 @@ public:
 	vector<string> attribute_name;//属性名
 	vector<string> attribute_type;//属性类型
 	vector<string> attribute_length;//属性长度
+
+};
+
+class record{
+public:
 	vector<string> values;
 };
+
 
 class create_index_info
 {
