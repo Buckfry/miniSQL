@@ -24,7 +24,8 @@ void block::initial(){
 	pin=0;
 	writen=false;
 	for(int i=0;i<BLOCK_LEN;i++)
-		data[i]='\0';
+		data[i]='@';
+    data[BLOCK_LEN]='\0';
 }
 
 

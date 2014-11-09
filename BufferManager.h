@@ -27,7 +27,7 @@ public:
 	fileHead();
 	~fileHead();
 	void initFileHead();
-private:
+//private:
 	bool dirty;
 	bool writen;
 };

@@ -18,7 +18,8 @@ void fileHead::initFileHead(){
 		filename="";
 		writen=false;
 		for(int j=0;j<OFFSET;j++)
-			fileInfo[j]='\0';
+			fileInfo[j]='@';
+        fileInfo[OFFSET]='\0';
 
 }
 
@@ -96,7 +97,7 @@ void BufferManager::Write_File_Info_Disk(fileHead *fileH){//to disk,not clear bu
 }
 
 void BufferManager::Get_Block_Disk(string File_Name,int blockNum,char data[]){//from disk
-	char tmp[BLOCK_LEN];
+	//char tmp[BLOCK_LEN];
 	string path=DBname+"/"+File_Name;
 	fstream fin;
 	fin.open(path.c_str(),ios::in);
@@ -105,7 +106,7 @@ void BufferManager::Get_Block_Disk(string File_Name,int blockNum,char data[]){//
 	fin.close();
 }
 void BufferManager::Get_File_Info_Disk(string File_Name,char getInfo[]){//from disk
-	char tmp[OFFSET];
+	//char tmp[OFFSET];
 	string path=DBname+"/"+File_Name;
 	fstream fin;
 	fin.open(path.c_str(),ios::in);
@@ -170,7 +171,7 @@ char* BufferManager::getFileInfo(string fileName){
 					if(tmp!=(&fileHlist[k])&&fileHlist[k].writen)
 						fileHlist[k].age++;
 	}
-	return ret;
+	return ret;//??
 }
 
 void BufferManager::updateFileInfo(string fileName,char* fileInfo){
@@ -256,7 +257,7 @@ void BufferManager::updateBlock(string fileName,int blockNum,char*newdata){
 	for(int i=0;i<MAX_BLOCK;i++){//must in buffer
 		if(Buffer[i].writen&&Buffer[i].fileName==fileName&&Buffer[i].blockNum==blockNum){
 			for(int j=0;j<BLOCK_LEN;j++)//update
-				Buffer[i].data=newdata[i];
+				Buffer[i].data[j]=newdata[j];//?
 			Buffer[i].dirty=true;
 			Buffer[i].iTime=0;
 			for(int k=0;k<MAX_BLOCK;k++){

@@ -23,7 +23,7 @@ public:
 	block();
 	virtual ~block();
 	void initial();
-private:
+//private:
 	bool pin;
 	bool dirty;
 	bool writen;
