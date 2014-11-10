@@ -13,7 +13,7 @@
 #include<iterator>
 #include<algorithm>
 #include<bitset>
-
+#include<utility>
 
 
 
@@ -31,17 +31,12 @@ void RecordManager::focus_current_db(string DB_name)
 	if(DB_name!=databuffer.DBname)
 					databuffer.setDatabase(DB_name);
 }
-
-
-
 //释放数据库的内存缓冲区
 void RecordManager::Close_Database(string DB_name)
 {
 	this->focus_current_db(DB_name);
         databuffer.closeDatabase();
 }
-
-
 //释放表或索引的内存缓冲区
 void RecordManager::Close_File(string DB_name, string filename)
 {
@@ -55,7 +50,6 @@ char* RecordManager::translate_fileinfo(record_fileInfo fi)
 	      char translate[FILEINFO_LEN];
           return  &translate;
 }
-
 //不知道怎么读，先空着
 void RecordManager::getfileinfo(char* fileinfo)
 {
@@ -63,7 +57,6 @@ void RecordManager::getfileinfo(char* fileinfo)
 //把数组里的数据写到fi里面去
 
 }
-
 //在建表的时候初始化它的头文件信息
 void RecordManager::create_table(string DB_name,create_record data)
 {
@@ -83,14 +76,13 @@ void RecordManager::create_table(string DB_name,create_record data)
     databuffer.createTable(data.table_name,translate_fileinfo(this-> fi));
 
 }
-
-
-//向表中插入元组
-void RecordManager::insert_record(string DB_name,string filename,vector<char> attr)
+//向表中插入元组,同时返回插入位置
+recordposition& RecordManager::insert_record(string DB_name,string filename,vector<char> attr)
 {
 	this->focus_current_db(DB_name);
     getfileinfo(databuffer.getFileInfo(filename));
     block datablock;
+    recordposition rp;
 
      if(fi.recordcount>fi.recordAmount)
      {
@@ -118,9 +110,10 @@ void RecordManager::insert_record(string DB_name,string filename,vector<char> at
     char* p=&(datablock.data);
     databuffer.insertBlock(filename,(fi.currentblocknum-1),p);
     databuffer.updateFileInfo(filename,this->translate_fileinfo(fi));
-
+    rp.blocknum(fi.currentblocknum);
+    rp.recordnum(fi.recordcount);
+    return rp;
 }
-
 //打印属性
 void RecordManager::Print(vector<char> attr)
 {
@@ -130,8 +123,7 @@ void RecordManager::Print(vector<char> attr)
 	}
 	cout<<endl;
 }
-
-//找出所查找的属性在record中的位置
+//找出所查找的属性在所有属性中的位置
 vector<int>& RecordManager::findposition(vector<char>attr,vector<char>searchedattr)
 {
 	vector<int> selected_attr;
@@ -146,40 +138,91 @@ vector<int>& RecordManager::findposition(vector<char>attr,vector<char>searchedat
     }
     return selected_attr;
 }
-
-
 //选择语句（无where）
 void RecordManager::Select_No_Where(string DB_name,string filename,vector<char> attr)
 {
 	this->focus_current_db(DB_name);
     getfileinfo(databuffer.getFileInfo(filename));
-    block datablock;
-    vector<int> attrnum(findposition(fi.attribute_name,attr));
-
-
-    for(int searchblock=0;searchblock!=MAX_BLOCK;searchblock++)
-    {
-    	datablock(*(databuffer.readBlock(filename,searchblock)));
-    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
-    	{
-    		vector<char> attrvalue;
-    		for(vector<char>::iterator it=attrnum.begin();it!=attrnum.end();it++)
-    		{
-    			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
-    		}
-    		this->Print(attrvalue);
-    	}
-    }
-
+	block datablock;
+	vector<int> attrnum(findposition(fi.attribute_name,attr));
+	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
+	    {
+	    	datablock(*(databuffer.readBlock(filename,searchblock)));
+	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
+	    	{
+	    		vector<char> attrvalue;
+	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
+	    		{
+	    			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
+	    		}
+	    		this->Print(attrvalue);
+	    	}
+	    }
 }
+//给index提供keyinfo
+keyinfo& RecordManager::getkeyinfo(string DB_name,string filename,char keyname)
+{
+	this->focus_current_db(DB_name);
+	getfileinfo(databuffer.getFileInfo(filename));
+	vector<char> temp;
+	temp.push_back(keyname);
+	keyinfo keyinformation;
+	vector<pair<char,recordposition>> keys;
+	pair<char,recordposition> key;
 
+	block datablock;
+	vector<int> attrnum(findposition(fi.attribute_name,temp));
+	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
+	    {
+	    	datablock(*(databuffer.readBlock(filename,searchblock)));
+	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
+	    	{
+	    		vector<char> attrvalue;
+	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
+	    		{
+	    			key.first=datablock.data[searchrecord*fi.recordLength+*it];
+	    			key.second.blocknum(searchblock);
+	    			key.second.recordnum(searchrecord);
+	    			keys.push_back((key));
+	    		}
+	    	}
+	    }
+	keyinformation.keyname(keyname);
+	keyinformation.keys(keys);
+	return keyinformation;
+}
+//删除语句（无where)
+void RecordManager::Delete_No_Where(string DB_name,string filename)
+{
+	this->focus_current_db(DB_name);
+    getfileinfo(databuffer.getFileInfo(filename));
+	block datablock;
+	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
+	    {
+	    	datablock(*(databuffer.readBlock(filename,searchblock)));
+	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
+	    	{
+	    		for(int i =0;i!=fi.recordLength;i++)
+	    		{
+	    			datablock.data[searchrecord*fi.recordLength+i]="NULL";
+	    		}
+	    	}
+	        char* p=&(datablock.data);
+	        databuffer.updateBlock(filename,searchblock,p);
+	    }
+	fi.currentblocknum(1);
+	fi.recordcount(0);
+    databuffer.updateFileInfo(filename,this->translate_fileinfo(fi));
+}
+//判断是否符合条件condition
 bool RecordManager::Confirm(vector<char> attr,vector<char> attrvalue, condition_info condition)
 {
 	 vector<int> conditionattrnum(findposition(attr,condition.conditionattr));
 	 vector<int> conditionattrtypenum(findposition(fi.attribute_name,condition.conditionattr));
 	 vector<char>::iterator it;
+	 vector<char>::iterator itype;
 	 int i=0;
-	for(it=conditionattrnum.begin();it!=conditionattrnum.end();it++,i++)
+	for(it=conditionattrnum.begin(),itype=conditionattrtypenum.begin();it!=conditionattrnum.end();it++,i++,itype++)
 	{
 		//得到所比较属性的类型fi.attribute_type[*it]
 		//得到左比较值attr[*it]，进行比较
@@ -187,21 +230,21 @@ bool RecordManager::Confirm(vector<char> attr,vector<char> attrvalue, condition_
 		{
 		case 0: // ‘=’
 			{
-				if(fi.attribute_type[*it]=='int')
+				if(fi.attribute_type[*itype]=='int')
 				{
 					int i1 = (int)attr[*it];
 					int i2 = (int)condition.comparedvalue;
 					if(i1==i2) continue;
 					else return 0;
 				}
-				else if(fi.attribute_type[*it] == 'char')
+				else if(fi.attribute_type[*itype] == 'char')
 				{
 					char *p1 = (LPSTR)(LPCTSTR)attr[*it];
 					char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
 					if(!strcmp(p1,p2)) continue;
 					else  return 0;
 				}
-				else if(fi.attribute_type[*it] == 'float')
+				else if(fi.attribute_type[*itype] == 'float')
 				{
 					float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
 					float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
@@ -213,21 +256,21 @@ bool RecordManager::Confirm(vector<char> attr,vector<char> attrvalue, condition_
 			break;
 		case 1://‘<>’
 		{
-			if(fi.attribute_type[*it]=='int')
+			if(fi.attribute_type[*itype]=='int')
 			{
 				int i1 = (int)attr[*it];
 				int i2 = (int)condition.comparedvalue;
 				if(i1!=i2) continue;
 				else return 0;
 			}
-			else if(fi.attribute_type[*it] == 'char')
+			else if(fi.attribute_type[*itype] == 'char')
 			{
 				char *p1 = (LPSTR)(LPCTSTR)attr[*it];
 				char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
 				if(strcmp(p1,p2)) continue;
 				else  return 0;
 			}
-			else if(fi.attribute_type[*it] == 'float')
+			else if(fi.attribute_type[*itype] == 'float')
 			{
 				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
 				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
@@ -240,21 +283,21 @@ bool RecordManager::Confirm(vector<char> attr,vector<char> attrvalue, condition_
 
 		case 2: // '<'
 			{
-				if(fi.attribute_type[*it]=='int')
+				if(fi.attribute_type[*itype]=='int')
 				{
 					int i1 = (int)attr[*it];
 					int i2 = (int)condition.comparedvalue;
 					if(i1<i2) continue;
 					else return 0;
 				}
-				else if(fi.attribute_type[*it] == 'char')
+				else if(fi.attribute_type[*itype] == 'char')
 				{
 					char *p1 = (LPSTR)(LPCTSTR)attr[*it];
 					char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
 					if(strcmp(p1,p2)<0) continue;
 					else  return 0;
 				}
-				else if(fi.attribute_type[*it] == 'float')
+				else if(fi.attribute_type[*itype] == 'float')
 				{
 					float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
 					float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
@@ -266,21 +309,21 @@ bool RecordManager::Confirm(vector<char> attr,vector<char> attrvalue, condition_
 			break;
 		case 3: // '>'
 		{
-			if(fi.attribute_type[*it]=='int')
+			if(fi.attribute_type[*itype]=='int')
 			{
 				int i1 = (int)attr[*it];
 				int i2 = (int)condition.comparedvalue;
 				if(i1>i2) continue;
 				else return 0;
 			}
-			else if(fi.attribute_type[*it] == 'char')
+			else if(fi.attribute_type[*itype] == 'char')
 			{
 				char *p1 = (LPSTR)(LPCTSTR)attr[*it];
 				char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
 				if(strcmp(p1,p2)>0) continue;
 				else  return 0;
 			}
-			else if(fi.attribute_type[*it] == 'float')
+			else if(fi.attribute_type[*itype] == 'float')
 			{
 				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
 				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
@@ -293,21 +336,21 @@ bool RecordManager::Confirm(vector<char> attr,vector<char> attrvalue, condition_
 
 		case 4: // '<='
 		{
-			if(fi.attribute_type[*it]=='int')
+			if(fi.attribute_type[*itype]=='int')
 			{
 				int i1 = (int)attr[*it];
 				int i2 = (int)condition.comparedvalue;
 				if(i1<=i2) continue;
 				else return 0;
 			}
-			else if(fi.attribute_type[*it] == 'char')
+			else if(fi.attribute_type[*itype] == 'char')
 			{
 				char *p1 = (LPSTR)(LPCTSTR)attr[*it];
 				char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
 				if(strcmp(p1,p2)<=0) continue;
 				else  return 0;
 			}
-			else if(fi.attribute_type[*it] == 'float')
+			else if(fi.attribute_type[*itype] == 'float')
 			{
 				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
 				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
@@ -319,21 +362,21 @@ bool RecordManager::Confirm(vector<char> attr,vector<char> attrvalue, condition_
 			break;
 		case 5: // '>='
 		{
-			if(fi.attribute_type[*it]=='int')
+			if(fi.attribute_type[*itype]=='int')
 			{
 				int i1 = (int)attr[*it];
 				int i2 = (int)condition.comparedvalue;
 				if(i1>=i2) continue;
 				else return 0;
 			}
-			else if(fi.attribute_type[*it] == 'char')
+			else if(fi.attribute_type[*itype] == 'char')
 			{
 				char *p1 = (LPSTR)(LPCTSTR)attr[*it];
 				char *p2 = (LPSTR)(LPCTSTR)condition.comparedvalue;
 				if(strcmp(p1,p2)>=0) continue;
 				else  return 0;
 			}
-			else if(fi.attribute_type[*it] == 'float')
+			else if(fi.attribute_type[*itype] == 'float')
 			{
 				float f1 = (float)atof((char *)(LPTSTR)(LPCTSTR)attr[*it]);
 				float f2 = (float)atof((char *)(LPTSTR)(LPCTSTR)condition.comparedvalue);
@@ -350,8 +393,6 @@ bool RecordManager::Confirm(vector<char> attr,vector<char> attrvalue, condition_
 	}
 		return 1;
 }
-
-
 //有where，但无可用索引的select语句
 void RecordManager::Select_Without_Useful_Cond(string DB_name,string filename,vector<char> attr,condition_info cond)
 {
@@ -361,13 +402,13 @@ void RecordManager::Select_Without_Useful_Cond(string DB_name,string filename,ve
     vector<int> attrnum(findposition(fi.attribute_name,attr));
 
 
-    for(int searchblock=0;searchblock!=MAX_BLOCK;searchblock++)
+    for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
     {
     	datablock(*(databuffer.readBlock(filename,searchblock)));
     	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
     	{
     		vector<char> attrvalue;
-    		for(vector<char>::iterator it=attrnum.begin();it!=attrnum.end();it++)
+    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
     		{
     			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
     		}
@@ -375,7 +416,56 @@ void RecordManager::Select_Without_Useful_Cond(string DB_name,string filename,ve
     		this->Print(attrvalue);
     	}
     }
+
 }
+//有where,但无可用索引的delete语句
+void RecordManager::Delete_Without_Useful_Cond(string DB_name,string filename,vector<char> attr, condition_info cond)
+{
+	this->focus_current_db(DB_name);
+	 getfileinfo(databuffer.getFileInfo(filename));
+	    block datablock;
+	    vector<int> attrnum(findposition(fi.attribute_name,attr));
+
+
+	    for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
+	    {
+	    	datablock(*(databuffer.readBlock(filename,searchblock)));
+	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
+	    	{
+	    		vector<char> attrvalue;
+	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
+	    		{
+	    			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
+	    		}
+	    		if(this->Confirm(attr,attrvalue,cond))
+	    		{
+	    			for(int i =0; i!=fi.recordLength;i++)
+	    			{
+	    				datablock.data[searchrecord*fi.recordLength+i]="NULL";//已删除的record仍旧占用空间，不更新fileinfo
+	    			}
+	    		}
+	    	}
+	        char* p=&(datablock.data);
+	        databuffer.updateBlock(filename,searchblock,p);
+	    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //7.有where且有可用索引的select 语句
 void RecordManager::Select_With_Useful_Cond(string DB_Name,string Table_Name,condition_info conds[10],int count,attr_info print[32],int Count,char cond, int num, index_info  node)
 {
@@ -524,11 +614,6 @@ void Select_With_Smaller_Cond(string DB_Name,string Table_Name,condition_info co
 }
 
 
-
-//12.判断是否符合某个指定条件
-
-
-
 //14.选择语句（有where）
 void Select_With_Where(string DB_Name,string Table_Name,condition_info conds[10],int count,char cond,attr_info print[32],int Count)
 {
@@ -582,82 +667,6 @@ void Delete_With_Where(string DB_Name,string Table_Name,condition_info conds[10]
 	Delete_Without_Useful_Cond(DB_Name,Table_Name,conds,count,nodes,cond);//如果一直没有合适的
 }
 
-//15.5 没有where的delete语句
-void Delete_No_Where(string DB_Name,string Table_Name)
-{
-	int m_fileType =0; //文件
-	int num=0; //blockNum
-	while(1)
-	{
-		blockInfo* tempb = readBlock(DB_Name, Table_Name, num , m_fileType);
-		if(tempb->charNum>0) //若该块有数据
-		{
-			tempb->charNum=0;
-			memset(tempb->cBlock,'\0',BLOCK_LEN);
-			tempb->dirtyBit=1;
-		}
-		else //若已经到了空块
-		{
-			return;
-		}
-		num++;
-	}
-	return;
-}
-
-//16.有where,但无可用索引的delete语句
-void Delete_Without_Useful_Cond(string DB_Name,string Table_Name,condition_info conds[10],int count,index_info nodes[32],char cond)
-{
-	int m_fileType =0; //文件
-	int num=0; //blockNum
-	while(1)
-	{
-		blockInfo* tempb = readBlock(DB_Name, Table_Name, num , m_fileType);
-		if(tempb->charNum>0) //若该块有数据
-		{
-			int start=0;
-			int end;
-			string tempst = tempb->cBlock;
-			while((end = tempst.Find(';',start))!=-1)
-			{
-				string temps = tempst.Mid(start,end-start+1); //取出一条record
-
-				int res = Confirm_To_Where(temps,conds,count,cond); //条件判断
-				if(res==1)
-				{
-					string temps1 = tempst.Left(start); //取该组的左边
-					string temps2 = tempst.Mid(end+1); //取该组的右边
-					string nulltemp = "";
-					for(int i=0;i<(int )strlen(temps)-1;i++)
-					{
-						nulltemp+=' ';
-					}
-					nulltemp += ';';
-					temps.Format(_T("%s%s%s"),temps1, nulltemp , temps2); //左+右，写回，即删除了中间
-					memset(tempb->cBlock,'\0',BLOCK_LEN);
-					char * p = (LPSTR)(LPCTSTR)temps;//写回
-					strcpy(tempb->cBlock,p);
-					tempb->charNum--; //记录数-1
-					tempb->dirtyBit=1; //置脏
-					start=end+1; //到下一条record
-					DeleteRecord(DB_Name,Table_Name);
-				}
-				else
-				{
-					start=end+1;
-					continue;
-				}
-			}
-			num++; //到下一块
-			continue;
-		}
-		else //若已经到了空块
-		{
-			return;
-		}
-	}
-	return;
-}
 
 //17.有where且有可用索引的delete 语句   这里不理解传入的nodes要干什么
 void Delete_With_Useful_Cond(string DB_Name,string Table_Name,condition_info conds[10],int count,index_info nodes[32],char cond,index_info node)   // int index 改成了  node ,不知道index能干嘛？  .h中保存index,方便改回来;若保持node,注意修改.h

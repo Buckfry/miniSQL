@@ -9,6 +9,7 @@
 #define FUNCTIONOFINDEX_RECORD_H_
 #include<iostream>
 #include<vector>
+#include<utility>
 
 using namespace std;
 class location
@@ -26,10 +27,10 @@ public:
 
 };
 
-class record{
+class keyinfo{
 public:
-	vector<char> values;
-	recordposition  rp;
+	char keyname;
+	vector<pair<char,recordposition>> keys;//存储键值和对应的位置
 };
 
 class recordposition{
