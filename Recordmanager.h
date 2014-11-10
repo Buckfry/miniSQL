@@ -74,45 +74,29 @@ public:
 	void create_table(string DB_name,create_record data);
 	//向表中插入元组,同时返回所插入元组的位置
 	recordposition& insert_record(string DB_name,string filename,vector<char> attr);
-	//选择语句（无where）
-	void Select_No_Where(string DB_name,string filename,vector<char> attr);
-	//删除语句（无where)
-	void Delete_No_Where(string DB_name,string filename);
+	//选择语句（无where）且无索引
+	void Select_Without_Useful_No_Where(string DB_name,string filename,vector<char> attr);
+	//选择语句（无where）有索引
+	void Select_With_Useful_No_Where(string DB_name,string filename,vector<char> attr,vector<recordposition> rp);
 	//有where，但无可用索引的select语句
 	void Select_Without_Useful_Cond(string DB_name,string filename,vector<char> attr,condition_info cond);
-	//有where,但无可用索引的delete语句
-	void Delete_Without_Useful_Cond(string DB_name,string filename,vector<char> attr,condition_info cond);
+	//有where，有索引可用的select语句
+	void Select_With_Useful_Cond(string DB_name,string filename,vector<char> attr,vector<recordposition> rp,condition_info cond);
+	//删除语句（无where)
+	void Delete_No_Where(string DB_name,string filename);
+	//有where,但无可用索引的delete语句,同时返回删除位置
+	vector<recordposition>& Delete_Without_Useful_Cond(string DB_name,string filename,vector<char> attr,condition_info cond);
+	//有where,有可用索引的delete语句,同时返回删除位置
+	vector<recordposition>& Delete_With_Useful_Cond(string DB_name,string filename,vector<char> attr,vector<recordposition> rp,condition_info cond);
 	//给index提供键的值和位置
 	keyinfo& getkeyinfo(string DB_name, string filename,char keyname);
 
-	//删除语句（有where）
-	void Delete_With_Where(string DB_name,string filename,vector<char> attr,condition_info cond);
-	//有where且有可用索引的select 语句
-	void Select_With_Useful_Cond(string DB_Name,string Table_Name,condition_info conds[10],int count,attribute_info print[32],int Count,char cond,int index);
-	//用等于索引的选择语句
-	void Select_With_Equal_Cond(string DB_Name,string Table_Name,condition_info conds[32],int count,attribute_info print[32],int Count,char cond,index_info Index);
-	//用大于或大于等于索引的选择语句
-	void Select_With_Greater_Cond(string DB_Name,string Table_Name,condition_info conds[32],int count,attribute_info print[32],int Count,char cond,index_info Index,int type);
-	//用小于或小于等于索引的选择语句
-	void Select_With_Smaller_Cond(string DB_Name,string Table_Name,condition_info conds[32],int count,attribute_info print[32],int Count,char cond,index_info Index,int type);
-	//选择语句（有where）
-	void Select_With_Where(string DB_Name,string Table_Name,condition_info conds[10],int count,char cond,attribute_info print[32],int Count);
-	//有where且有可用索引的delete 语句
-	void Delete_With_Useful_Cond(string DB_Name,string Table_Name,condition_info conds[10],int count,index_info nodes[32],int num,char cond,int index);
-	//用等于索引的删除语句
-	void Delete_With_Equal_Cond(string DB_Name,string Table_Name,condition_info conds[10],int count,index_info nodes[32],int num,char cond,index_info Index);
-	//用大于或大于等于索引的删除语句
-	void Delete_With_Greater_Cond(string DB_Name,string Table_Name,condition_info conds[10],int count,index_info nodes[32],int num,char cond,index_info Index,int type);
-	//用小于或小于等于索引的删除语句
-	void Select_With_Smaller_Cond(string DB_Name,string Table_Name,condition_info conds[32],int count,index_info nodes[32],int num,char cond,index_info Index,int type);
-//	//查找有无可用索引
-//	bool Find_Useful_Cond(condition_info conds[10],int count,int & index);
-	//插入所有索引节点
-	void Insert_Index_All(string DB_Name,string Table_Name,string Index_Name,int length,int offset,int type);
-	//验证可否插入(prime? unique?)
-	bool Verify_Insertable(string DB_Name,string Table_Name,index_info nodes[32],int count,string Attr);
-	//退出程序
-	void Quit(string DB_Name);
+//
+//
+//	//验证可否插入(prime? unique?)
+//	bool Verify_Insertable(string DB_Name,string Table_Name,index_info nodes[32],int count,string Attr);
+//	//退出程序
+//	void Quit(string DB_Name);
 
 };
 
