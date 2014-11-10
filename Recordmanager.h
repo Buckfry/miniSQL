@@ -16,13 +16,13 @@
 #include"sql.h"
 using namespace std;
 
-#define FILEINFO_LEN 16
+#define MAX_ATTR_NUM 18
 
 class record_fileInfo {
 public:
-	string fileName;		// the name of the file
-	vector<char> attribute_name;
-	vector<char> attribute_type;
+	string fileName;		// the name of the file, no longer than 2byte
+	vector<char> attribute_name;  //no more than 9 attributes
+	vector<char> attribute_type;  // int, float or char
 	int recordAmount;		// the number of record in the file‘s block
 	int recordLength;		// the length of the record in the file
 //	fileInfo *next;			// the pointer points to the next file

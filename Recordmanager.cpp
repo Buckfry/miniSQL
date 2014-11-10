@@ -14,7 +14,7 @@
 #include<algorithm>
 #include<bitset>
 #include<utility>
-
+#include<sstream>
 
 
 RecordManager::RecordManager() {
@@ -44,18 +44,41 @@ void RecordManager::Close_File(string DB_name, string filename)
 					databuffer.setDatabase(DB_name);
 	databuffer.closeFile(filename);
 }
-//不知道怎么存，先空着
+//把fileinfo转为char*存储
 char* RecordManager::translate_fileinfo(record_fileInfo fi)
 {
-	      char translate[FILEINFO_LEN];
-          return  &translate;
+	char translate[MAX_ATTR_NUM];
+	int i =0;
+	  for(vector<char>::iterator it=fi.attribute_name.begin();it!=fi.attribute_name.end();it++,i++)
+	  {
+		  translate[i]=*it;
+	  }
+	 for(vector<char>::iterator it=fi.attribute_type.begin();it!=fi.attribute_type.end();it++,i++)
+	 	  {
+		 translate[i]=*it;
+	 	  }
+	 string temp(&translate);
+     stringstream tp;
+     tp<<fi.recordAmount<<fi.recordLength<<fi.recordcount<<fi.currentblocknum<<fi.fileName;
+     temp+=tp.str();
+       return  &(temp.c_str());
 }
-//不知道怎么读，先空着
+//把数组里的数据写到fi里面去
 void RecordManager::getfileinfo(char* fileinfo)
 {
-
-//把数组里的数据写到fi里面去
-
+	int i=0;
+	for(vector<char>::iterator it=fi.attribute_name.begin();it!=fi.attribute_name.end();it++,i++)
+		  {
+			 *it=fileinfo[i];
+		  }
+	for(vector<char>::iterator it=fi.attribute_type.begin();it!=fi.attribute_type.end();it++,i++)
+		 	  {
+			 *it=fileinfo[i];
+		 	  }
+    string temp(&(fileinfo[i]));
+    stringstream tp;
+    temp>>tp;
+    tp>>fi.recordAmount>>fi.recordLength>>fi.recordcount>>fi.currentblocknum>>fi.fileName;
 }
 //在建表的时候初始化它的头文件信息
 void RecordManager::create_table(string DB_name,create_record data)
