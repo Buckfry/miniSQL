@@ -18,6 +18,7 @@ using namespace std;
 
 #define MAX_ATTR_NUM 18
 
+
 class record_fileInfo {
 public:
 	string fileName;		// the name of the file, no longer than 2byte
@@ -39,9 +40,7 @@ public:
 	vector<char> conditionattr;
 	vector<char> comparedvalue;
 	vector<int>  condition;//0 for = , 1 for <>, 2 for <, 3for >, 4 for<= ,5 for >=
-
 };
-
 class RecordManager {
 private:
 	BufferManager databuffer;

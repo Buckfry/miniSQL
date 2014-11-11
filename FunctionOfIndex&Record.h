@@ -61,8 +61,7 @@ public:
 class search_info
 {
 public:
-	string tablename;
-	string index_name;
+	string db_name;
 	vector<string> condition;// = or <= or >= or < or >
 	vector<string> attribute_name;//attribute name
 	vector<string> value;
@@ -92,8 +91,6 @@ void insert_index(update_index_info info);
 location delete_index(search_info info);//find the position
 void delete_index(update_index_info);
 //throw exception "deleteindex_error"
-
-
 
 //////////////////////////////////////////////////////////////////////
 //API to record
