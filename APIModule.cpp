@@ -18,7 +18,7 @@
 using namespace std;
 
 set<SqlMethod> tableMethods;  //保存有关table的操作
-string DB_name="";
+
 
 
 void initAPI(){
@@ -33,21 +33,21 @@ void initAPI(){
 
 
 
-void APIModule(const SQL &sql){
+void APIModule(const SQL &sql, string Current_DBname){
 //	try{
     if(sql.method !=NOP){  //没有操作
     	//DATABASE
     	if( sql.method == CREATEDATABASE){
-    		//
+    		CreateDatabase(sql);
     	}
 
     	else if (sql.method == DROPDATABASE ){
-    		//
+    		DropDatabase(sql);
     	}
 
     	else if (sql.method == USEDATABASE){
     		//initBuffer();
-    		DB_name=sql.targetName;
+    		Current_DBname=sql.targetName;
     	}
 
     	else if (sql.method == QUIT){
@@ -55,11 +55,12 @@ void APIModule(const SQL &sql){
     	}
 
     	else if (sql.method == CREATETABLE){
-    		//
+    		CreateTable(sql , Current_DBname);
     	}
 
     	else if (sql.method == DROPTABLE){
-    		//
+    		DropTable(sql , Current_DBname);
+    		UseDatabase(sql);
     	}
 
     	else if (sql.method == CREATEINDEX){
@@ -67,14 +68,14 @@ void APIModule(const SQL &sql){
     	}
 
     	else if (sql.method == DROPINDEX){
-    		//
+    		dropindex(sql.targetName);
     	}
 
 
        //TAble
     	else if(tableMethods.count(sql.method)){ //存在这个操作
-           if (Current_Dataname) {  //存在这个database
-              if(findtable(sql.targetName)){ //存在这个table catalog的函数
+           if (Current_DBname) {  //在当前database
+              if(findtable(sql.targetName , Current_DBname)){ //存在这个table catalog的函数
 
 
                 //select

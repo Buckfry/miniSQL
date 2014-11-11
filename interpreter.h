@@ -15,14 +15,12 @@
 #include <cassert>
 
 
-
 void initSQL(SQL &sql);
+bool interpret(istringstream& in, SQL& sql);
 void initInterpreter();
 
-bool interpret(istringstream& in, SQL& sql);
-
 string getquery(istream& in = cin);
-string getLastError();  //输出错误信息
+string getLastError(); //输出出错信息
 
 
 
