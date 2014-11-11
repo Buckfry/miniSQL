@@ -44,7 +44,7 @@ public:
 	string index_name;
 	int lengh;//type's length(especially for char)
 	string attribute_name;
-	string type;//int, float or char
+	int type;//1是char 2是int 3是float
 	vector<string> data;
 	vector<string> position;
 };
