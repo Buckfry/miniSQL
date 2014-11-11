@@ -18,6 +18,7 @@ using namespace std;
 
 #define MAX_ATTR_NUM 18
 
+
 class record_fileInfo {
 public:
 	string fileName;		// the name of the file, no longer than 2byte
@@ -38,10 +39,8 @@ class condition_info
 public:
 	vector<string> conditionattr;
 	vector<char> comparedvalue;
-	vector<string>  condition;//0 for = , 1 for <>, 2 for <, 3for >, 4 for<= ,5 for >=
-
+	vector<string>  condition;//= , <>, <, >,<= , >=
 };
-
 class RecordManager {
 private:
 	BufferManager databuffer;
@@ -53,7 +52,7 @@ private:
 	//将class fileInfo转换为数组来存储
 	char* translate_fileinfo(record_fileInfo fi);
 	//读入filehead中的fileinfo
-	void getfileinfo(char* fileinfo,attr_info attribute_info,string filename);
+	void getfileinfo(string fileinfo,attr_info attribute_info,string filename);
 	//打印属性值
 	void Print(vector<char> attrvalue);
 	//打印表头

@@ -5,6 +5,7 @@
  *      Author: Even
  */
 
+
 #include "Interpreter.h"
 #include "sql.h"
 
@@ -18,10 +19,10 @@ map < string, function > createFunctions;
 map < string, function > dropFunctions;
 map < string, function > :: iterator it;
 
-map < string, Operator > operators;
-map < string, Operator > :: iterator itOperator;
-map < string, LogicalOperator > logicalOperators;
-map < string, LogicalOperator > :: iterator itLogicalOperator;
+map < string, string > operators;
+map < string, string> :: iterator itOperator;
+map < string, string > logicalOperators;
+map < string, string > :: iterator itLogicalOperator;
 map < string, int > types;
 map < string, int > :: iterator itType;
 
@@ -31,6 +32,7 @@ void initSQL(SQL &sql) {   //初始化SQL结构
 	sql.method = NOP;
 	sql.argc = 0;
     sql.targetName.clear();
+    sql.length.clear();
     sql.argv.clear();
     sql.value.clear();
     sql.result.clear();
@@ -258,9 +260,8 @@ void interpretCreateDatabase(istringstream& in, SQL& sql) {  //检测解析creat
 
 void interpretCreateTable(istringstream& in, SQL& sql) {
 	string strName, strType,strTemp;
-	int  intType;
 	string strChar;
-	ostringstream sFormat;  //输出？
+
 	int nArgc = 0, nTemp;
 	map < string, int > keys;
 	sql.method = CREATETABLE;
@@ -287,19 +288,18 @@ void interpretCreateTable(istringstream& in, SQL& sql) {
 			in >> nTemp;  //读入字符串长度n
 			if (!in)
 				throw ("Syntax error in defining data type of column \"" + strName + "\", an integer is needed !");
-			sFormat.clear();
-			sFormat << nTemp;
-			sql.aux.push_back(sFormat.str()); //把非字符串转换为字符串
+
+			sql.length.push_back(nTemp);
 			in >> strChar;  //读入）
 			if (strChar != ")")
 				throw ("\')\' missing in defining data type \"" + strType + "\" !");
 		}
 		else {
-            sql.aux.push_back("255");
+            sql.length.push_back(255);
 		}
 		in >> strTemp;
 		if (strTemp == "unique") {   //检测属性是否为unique
-			sql.isUnique.push_back(1);
+			sql.isUnique.push_back(2);
 			in >> strTemp;
 		} else {
 			sql.isUnique.push_back(0);
@@ -317,9 +317,13 @@ void interpretCreateTable(istringstream& in, SQL& sql) {
 	while (strName != ")") {
 		if (strName == STRINGEND)
 			throw ("Syntax error in primary keys !");
+        if(keys.find(strName)!=keys.end()){
 		nTemp = keys.find(strName)->second;  //找到primary key 所在第几个
-		sql.isUnique[nTemp] = 2;  //primary key 的属性一定是unique
-
+		sql.isUnique[nTemp] = 1;  //primary key 的属性一定是unique
+        }
+        else {
+            throw ("primary key does not exsist !");
+        }
 		in >> strChar;
 		if (strChar == ")") {
 			strName = strChar;
@@ -412,15 +416,15 @@ void initInterpreter() {
 	dropFunctions.insert(pair < string, function > ("index", interpretDropIndex));
 
 
-	operators.insert(pair < string, Operator> ("=", EQU));
-	operators.insert(pair < string, Operator> ("<>", NEQ));
-	operators.insert(pair < string, Operator> (">", GRE));
-	operators.insert(pair < string, Operator> ("<", LES));
-	operators.insert(pair < string, Operator> (">=", GEQ));
-	operators.insert(pair < string, Operator> ("<=", LEQ));
+	operators.insert(pair < string, string> ("=", "="));
+	operators.insert(pair < string, string> ("<>", "<>"));
+	operators.insert(pair < string, string> (">", ">"));
+	operators.insert(pair < string, string> ("<", "<"));
+	operators.insert(pair < string, string> (">=", ">="));
+	operators.insert(pair < string, string> ("<=", "<="));
 
-    logicalOperators.insert(pair < string, LogicalOperator > ("or", OR));
-	logicalOperators.insert(pair < string, LogicalOperator > ("and", AND));
+    logicalOperators.insert(pair < string, string > ("or", "or"));
+	logicalOperators.insert(pair < string, string > ("and", "and"));
 
 	types.insert(pair < string, int > ("char", 1));
     types.insert(pair < string, int > ("int", 2));
@@ -494,7 +498,7 @@ string getquery(istream& in) {
 			in >> strWord;
 		} while (strWord.empty());
 		line += " " + strWord;
-	} while (in.eof());
+	} while (strWord[strWord.length ()- 1] != ';');
 	reconstruct(line);
 	return line;
 }
@@ -502,4 +506,3 @@ string getquery(istream& in) {
 string getLastError() {
 	return unexpectedError;
 }
-

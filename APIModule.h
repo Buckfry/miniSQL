@@ -11,9 +11,7 @@
 #include "sql.h"
 
 void initAPI();
-void APIModule(const SQL &sql);
-
-
+void APIModule(const SQL &sql,string Current_DBname);
 
 
 

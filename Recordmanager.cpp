@@ -7,7 +7,7 @@
 
 #include "Recordmanager.h"
 #include"sql.h"
-#include"block1.h"
+#include"block.h"
 #include"string.h"
 #include"BufferManager.h"
 #include<iterator>
@@ -52,14 +52,13 @@ char* RecordManager::translate_fileinfo(record_fileInfo fi)
        return  &(tp.str());
 }
 //把数组里的数据写到fi里面去
-void RecordManager::getfileinfo(char* fileinfo,attr_info attribute_info,string filename)
+void RecordManager::getfileinfo(string fileinfo,attr_info attribute_info,string filename)
 {
 	fi.attribute_name=attribute_info.attribute_name;
 	fi.attribute_type=attribute_info.attribute_type;
 	fi.fileName=filename;
-    string temp(&(fileinfo));
     stringstream tp;
-    temp>>tp;
+    fileinfo>>tp;
     tp>>fi.recordAmount>>fi.recordLength>>fi.recordcount>>fi.currentblocknum;
 }
 //在建表的时候初始化它的头文件信息

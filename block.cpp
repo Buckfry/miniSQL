@@ -1,28 +1,32 @@
-/*
- * block.cpp
- *
- *  Created on: 2014��11��3��
- *      Author: Administrator
- */
+//
+//  block.cpp
+//  buffer
+//
+//  Created by Emma Chen on 14-11-11.
+//  Copyright (c) 2014年 Emma Chen. All rights reserved.
+//
 
+#include <iostream>
 #include "block.h"
+using namespace std;
 
 block::block() {
-	// TODO Auto-generated constructor stub
-	this->initial();
+    
+    this->initial();
 }
 
 block::~block() {
-	// TODO Auto-generated destructor stub
+    
 }
-void initial(){
-	blockNum=-1;
-	data=NULL;
-	fileName="";
-	iTime=0;
-	dirty=false;
-	pin=0;
-	writen=false;
-
+void block::initial(){
+    blockNum=-1;
+    fileName="";
+    iTime=0;
+    dirty=false;
+    pin=0;
+    writen=false;
+    for(int i=0;i<BLOCK_LEN;i++)
+        data[i]='@';
+    data[BLOCK_LEN-1]='\0';
 }
 

@@ -52,7 +52,7 @@ public:
 	string index_name;
 	int lengh;//type's length(especially for char)
 	string attribute_name;
-	string type;//int, float or char
+	int type;//1是char 2是int 3是float
 	vector<string> data;
 	vector<string> position;
 };
@@ -69,8 +69,7 @@ public:
 class search_info
 {
 public:
-	string tablename;
-	string index_name;
+	string db_name;
 	vector<string> condition;// = or <= or >= or < or >
 	vector<string> attribute_name;//attribute name
 	vector<string> value;
@@ -100,8 +99,6 @@ void insert_index(update_index_info info);
 location delete_index(search_info info);//find the position
 void delete_index(update_index_info);
 //throw exception "deleteindex_error"
-
-
 
 //////////////////////////////////////////////////////////////////////
 //API to record
