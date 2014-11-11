@@ -21,15 +21,23 @@ class location
 class create_record{
 public:
 	string table_name;
-	vector<char> attribute_name;//属性名
-	vector<char> attribute_type;//属性类型
-	vector<int> attribute_length;//属性长度(每个属性的字节数)
+	int attribute_num;
+//	vector<char> attribute_name;//属性名
+//	vector<char> attribute_type;//属性类型
+//	vector<int> attribute_length;//属性长度(每个属性的字节数)
+
+};
+
+class attr_info{
+public:
+		vector<string> attribute_name;//属性名
+		vector<int> attribute_type;//属性类型
 
 };
 
 class keyinfo{
 public:
-	char keyname;
+	string keyname;
 	vector<pair<char,recordposition>> keys;//存储键值和对应的位置
 };
 
