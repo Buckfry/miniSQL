@@ -49,17 +49,18 @@ char* RecordManager::translate_fileinfo(record_fileInfo fi)
 {
      stringstream tp;
      tp<<fi.recordAmount<<fi.recordLength<<fi.recordcount<<fi.currentblocknum;
-       return  &(tp.str());
+       return  (tp.str()).c_str();
 }
-//把数组里的数据写到fi里面去
+//更新fi
 void RecordManager::getfileinfo(string fileinfo,attr_info attribute_info,string filename)
 {
 	fi.attribute_name=attribute_info.attribute_name;
 	fi.attribute_type=attribute_info.attribute_type;
 	fi.fileName=filename;
     stringstream tp;
-    fileinfo>>tp;
-    tp>>fi.recordAmount>>fi.recordLength>>fi.recordcount>>fi.currentblocknum;
+    string dump;
+    tp<<fileinfo;
+    tp>>dump>>fi.recordAmount>>dump>>fi.recordLength>>dump>>fi.recordcount>>dump>>fi.currentblocknum;
 }
 //在建表的时候初始化它的头文件信息
 void RecordManager::create_table(string DB_name,create_record data)

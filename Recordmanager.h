@@ -51,7 +51,7 @@ private:
 	void focus_current_db(string DB_name);
 	//将class fileInfo转换为数组来存储
 	char* translate_fileinfo(record_fileInfo fi);
-	//读入filehead中的fileinfo
+	//更新fi
 	void getfileinfo(string fileinfo,attr_info attribute_info,string filename);
 	//打印属性值
 	void Print(vector<char> attrvalue);
