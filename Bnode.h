@@ -10,6 +10,7 @@
 
 #include "Buffermanager.h";
 #include "headforBnode.h";
+#include "publichead.h";
 #include<math.h>
 
 using namespace std;

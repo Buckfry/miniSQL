@@ -46,16 +46,6 @@ public:
 
 };
 
-class keyinfo{
-public:
-	string keyname;
-	vector<pair<string,recordposition>> keys;//存储键值和对应的位置
-};
-
-class recordposition{
-	int    recordnum;
-	int    blocknum;
-};
 
 
 
