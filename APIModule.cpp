@@ -9,9 +9,8 @@
 #include "APIModule.h"
 #include "RecordManager.h"
 #include "Catalog.h"
-#include "FunctionOfIndex&Record.h"
-//#include <map>
-//#include <set>
+#include "publichead.h"
+#include "Recordmanager.h"
 #include <iostream>
 #include <algorithm>
 
@@ -48,17 +47,17 @@ void APIModule(const SQL &sql, string Current_DBname){
 
     	else if (sql.method == USEDATABASE){
     		//initBuffer();
-
     		Current_DBname=sql.targetName;
     		UseDatabase(sql);
     	}
 
     	else if (sql.method == QUIT){
-    		//
+
+    		Quit(Current_DBname); //record
     	}
 
     	else if (sql.method == CREATETABLE){
-           int temp;
+    		int temp;
     		   for(int i=0; i< sql.isUnique.size(); i++){
     		    	if(sql.isUnique[i]==1){
     		    	temp=i;
@@ -67,89 +66,54 @@ void APIModule(const SQL &sql, string Current_DBname){
     		   }
            string indexname=sql.argv[temp];
 
-    		/*	class create_index_info
-    		    		{
-    		    		public:
-    		    			string index_name;   //为primarykey的名字
-    		    			int lengh;//type's length(especially for char) //属性类型的长度
-    		    			string attribute_name;  //primarykey的名字
-    		    			string type;//int, float or char
-    		    			vector<string> data; //不需要
-    		    			vector<string> position; //不需要
-    		    		};  */
 
-    		create_index_info CIT;   // index的类   primarykey自动    //只需要前4个星星，indexname为primarykey的名字
-
-    		CIT.index_name=indexname;
-    		CIT.length=sql.length[temp];
-    		CIT.attribute_name=indexname;
-    		CIT.type=sql.types[temp];
-
-
- /*class create_record{
- public:
-	string table_name;
-	//vector<char> attribute_name;//属性名
-	//vector<char> attribute_type;//属性类型
-	int attribute_num; //属性数目
-	//vector<int> attribute_length;//属性长度(每个属性的字节数)
-
-};*/
     		create_record  CR;  //record 的类
     		CR.table_name=sql.targetName;
     		CR.attribute_num=sql.argc;
+    		CR.attribute_length=sql.length;  //vector?
+
+    		Bnode bnode(indexname);
+
+    		keyinfo key;
 
     		CreateTable(sql , Current_DBname);  //检查有没有抛错即可
-    		createindex_index(CIT);
-    		create_table(Current_ DBname , CR);
+    		bnode.createindex(sql.length[temp],key);
+    		create_table(Current_DBname , CR);
     	}
 
     	else if (sql.method == DROPTABLE){
 
     		IndexInfo indexinfo;
     		indexinfo= DropTable(sql , Current_DBname);  //得到indexinfo 有vector的indexname  传给index
-    	   for(int i=0; i<indexinfo.indexname.size(); i++){
-    		   dropindex( indexinfo.indexname[i]);
-    	   }
-    		//dropindex 循环删除indexname；dropindex(string indexname);
 
+
+
+    	   for(int i=0; i<indexinfo.indexname.size(); i++){
+    		   Bnode bnode(indexinfo.indexname[i]);
+    		   bnode.drop_index( indexinfo.indexname[i]);
+    	   }
+
+           Drop_Table(Current_DBname , sql.targetName);
     	}
 
     	else if (sql.method == CREATEINDEX){
     		Index index;
             index = CreateIndex(sql,Current_DBname); //返回attribute的length和类型
 
-    		 keyinfo KInfo;
-    		 KInfo = getkeyinfo(Current_DBname, sql.aux[0],sql.argv[0]);
+    		 keyinfo key;
+    		 key = getkeyinfo(Current_DBname, sql.aux[0],sql.argv[0]);
 
-    		 create_index_info CII;
-    		 CII.index_name=sql.targetName;
-    		 CII.length=index.length;
-    		 CII.attribute_name=sql.argv[0];
-    		 CII.type=index.type;
-    	/*	class create_index_info
-    		{
-    		public:
-    			string index_name;  //
-    			int lengh;//type's length(especially for char)  //catalog会返回
-    			string attribute_name;
-    			int type;//int, float or char  //catalog会返回
-    			vector<string> data; //张会返回填好
-    			vector<string> position;// 张会返回填好
-    		};  */
-    		 createindex_index(CIT);
-    /*class keyinfo{
-public:
-	char keyname;
-	vector<pair<char,recordposition>> keys;//存储键值和对应的位置
-};*/
+            Bnode bnode(sql.targetName);
+    		bnode.createindex(index.length ,key);
+
 
     		//
     	}
 
     	else if (sql.method == DROPINDEX){
     		DropIndex(sql.targetName);
-    		dropindex(sql.targetName); // index
+    		Bnode bnode(sql.targetName);
+    		bnode.drop_index(sql.targetName);// index
     	}
 
 
@@ -162,72 +126,141 @@ public:
                 //select
                 //@1 select */attrName from table;  //输出结果如何要问record
                 if(sql.method == SELECTALL){
-                    //
-                	/*class IndexInfo{
-                     public:
-	                 vector<string> indexname;
-	                 vector<string> attrname;
-	                 TableInfo table; */
-};
-                	IndexInfo& Select(SQL *b,string database);
+                   IndexInfo indexinfo;
+                   indexinfo = Select(sql,Current_DBname);
 
-                /*	class condition_info
-                	{
-                	public:
-                		vector<string> conditionattr;
-                		vector<char> comparedvalue;  //string要改成char
-                		vector<string>  condition;//0 for = , 1 for <>, 2 for <, 3for >, 4 for<= ,5 for >=
-
-                	};*/
+                   attr_info attribute_info;
+                   attribute_info.attribute_name=indexinfo.table.attrname;
+                   attribute_info.attribute_length=indexinfo.table.length;
+                   attribute_info.attribute_type=indexinfo.table.type;
 
 
 
+                  Select_With_Useful_No_Where(Current_DBname,sql.targetName,sql.result,attribute_info);
 
 
                 }
 
                 //select */attrName from table where argv operation value;
                 else if(sql.method == SELECTWHERE){
-                /*class IndexInfo{
-                	public:
-                		vector<string> indexname;
-                		vector<string> attrname;
-                		TableInfo table;
-                	};*/
+                   IndexInfo indexinfo;
+                   indexinfo = Select(sql,Current_DBname);
 
+            	   condition_info coninfo;
+            	   coninfo.conditionattr=sql.argv;
+            	   coninfo.condition=sql.operators;
+            	   coninfo.comparedvalue=sql.value;
+            	   attr_info attribute_info;
+            	   attribute_info.attribute_name=indexinfo.table.attrname;
+            	   attribute_info.attribute_length=indexinfo.table.length;
+            	   attribute_info.attribute_type=indexinfo.table.type;
 
+                   if(indexinfo.indexname.size()==0){
+
+                	  Select_Without_Useful_Cond(Current_DBname , sql.targetName , sql.result,coninfo ,  attribute_info);
+                   }
+
+                   else{
+
+                      for(int i=0; i<indexinfo.indexname.size(); i++){
+                         int temp;
+                         for(int j=0; j<sql.argv.size(); j++){
+                	       if(indexinfo.attrname[i]==sql.argv[j]){
+                		        temp=j;
+                	       }
+                         }
+                         Bnode bnode(indexinfo.indexname[i]);
+                         vector<recordposition> recordposi;   //需要修改
+                         recordposi=bnode.searchbyindex(sql.operators[temp], sql.value[temp]);
+                      }
+
+                   Select_With_Useful_Cond(Current_DBname,sql.targetName,sql.result,recordposi ,coninfo ,attribute_info);
+                  }
 
                 }
                 else if(sql.method == INSERT){
-                	//  IndexInfo& Insert(SQL *b,string database);  会抛错
+                	 IndexInfo  indexinfo;
+                	 indexinfo = Insert(sql,Current_DBname); // 会抛错
 
+                	 int temp;
+                	 for(int i=0; i<indexinfo.table.attrtype.size(); i++ ){
+                		 if(indexinfo.table.attrtype[i]==1)
+                			temp=i;
+                	 }
 
-                /*	class recordposition{
-                		int    recordnum;
-                		int    blocknum;
-                	}; */
+                	 string indexname=indexinfo.table.attrname[temp];
+                	 Bnode bnode(indexname);
 
-              //  recordposition& insert_record(string DB_name,string filename,vector<char> attr);
+                 //需要修改
+                	 for(int i=0; i< sql.argv.size(); i++){
+                		 vector<recordposition> recordposi;
+                		recordposi = bnode.searchbyindex("=",sql.argv[i]) ;
+                	 }
+                 //需抛出异常；
 
-                	/*class update_index_info
-                	{
-                	public:
-                		string index_name;//由api赋值
-                		string value;//index 的value    我要去table里找
-                		location loc;//数据所在位置
-                	};*/
+                	 recordposition rp;
 
-                	//
+                	 attr_info attribute_info;
+                	 attribute_info.attribute_name=indexinfo.table.attrname;
+                	 attribute_info.attribute_type=indexinfo.table.type;
+                	 attribute_info.attribute_length=indexinfo.table.length;
+
+                	 rp = insert_record(Current_DBname,sql.targetName,sql.argv,attribute_info);
+
+                	 for(int i=0; i< sql.argv.size(); i++){
+                		 bnode.InserttoIndex(sql.argv[i], rp);
+                	 }
+
                 }
 
                 else if(sql.method == DELETEALL){
+                IndexInfo indexinfo;
+                indexinfo = Delete(sql,Current_DBname);
 
-                IndexInfo& Delete(SQL *b,string database);
+                attr_info attribute_info;
+                attribute_info.attribute_name=indexinfo.table.attrname;
+                attribute_info.attribute_length=indexinfo.table.length;
+                attribute_info.attribute_type=indexinfo.table.type;
 
+                Delete_No_Where(Current_DBname,sql.targetName,attribute_info);
 
                 }
                 else if(sql.method == DELETEWHERE){
+                	IndexInfo indexinfo;
+                    indexinfo = Select(sql,Current_DBname);
 
+                	condition_info coninfo;
+                	coninfo.conditionattr=sql.argv;
+                	coninfo.condition=sql.operators;
+                	coninfo.comparedvalue=sql.value;
+                    attr_info attribute_info;
+                	attribute_info.attribute_name=indexinfo.table.attrname;
+                	attribute_info.attribute_length=indexinfo.table.length;
+                	attribute_info.attribute_type=indexinfo.table.type;
+
+                	vector<recordposition> recordposition;
+
+                	if(indexinfo.indexname.size()==0){
+
+                		recordposition = Delete_Without_Useful_Cond(Current_DBname,sql.targetName, coninfo, attribute_info);
+                	 }
+
+                	 else{
+
+                	       for(int i=0; i<indexinfo.indexname.size(); i++){
+                	              int temp;
+                	              for(int j=0; j<sql.argv.size(); j++){
+                	                  if(indexinfo.attrname[i]==sql.argv[j]){
+                	                		  temp=j;
+                	                   }
+                	               }
+                	               Bnode bnode(indexinfo.indexname[i]);
+                	               vector<recordposition> recordposi;   //需要修改
+                	               recordposi=bnode.searchbyindex(sql.operators[temp], sql.value[temp]);
+                	         }
+
+                	      recordposition = Delete_With_Useful_Cond(Current_DBname,sql.targetName ,recordposi ,coninfo , attribute_info);
+                	                  }
                 }
             }
                 else{

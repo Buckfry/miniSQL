@@ -12,7 +12,7 @@
 #include <vector>
 #include <string>
 #include <map>
-#include <list>
+
 
 using namespace std;
 
@@ -57,18 +57,6 @@ public:
 
 };
 
-class IndexInfo{
-public:
-	vector<string> indexname;
-	vector<string> attrname;
-};
-class TableInfo{
-public:
-	vector<string> attrname;
-	vector<int> type;//char=1,int=2,float=3
-	vector<int> attrtype;//primary=1,unique=2,not null=3
-	vector<int> length;
-};
 
 
 
