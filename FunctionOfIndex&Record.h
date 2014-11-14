@@ -21,16 +21,24 @@ class location
 class create_record{
 public:
 	string table_name;
-	//vector<char> attribute_name;//属性名
-	//vector<char> attribute_type;//属性类型
-	int attribute_num; //属性数目
-	//vector<int> attribute_length;//属性长度(每个属性的字节数)
+	int attribute_num;
+//	vector<char> attribute_name;//属性名
+//	vector<char> attribute_type;//属性类型
+//	vector<int> attribute_length;//属性长度(每个属性的字节数)
+
+};
+
+class attr_info{
+public:
+		vector<string> attribute_name;//属性名
+		vector<int> attribute_type;//属性类型
+
 
 };
 
 class keyinfo{
 public:
-	char keyname;
+	string keyname;
 	vector<pair<char,recordposition>> keys;//存储键值和对应的位置
 };
 
@@ -45,7 +53,9 @@ public:
 	string index_name;
 	int lengh;//type's length(especially for char)
 	string attribute_name;
-	int type;//int, float or char
+
+	int type;//1是char 2是int 3是float
+
 	vector<string> data;
 	vector<string> position;
 };
@@ -62,8 +72,7 @@ public:
 class search_info
 {
 public:
-	string tablename;
-	string index_name;
+	string db_name;
 	vector<string> condition;// = or <= or >= or < or >
 	vector<string> attribute_name;//attribute name
 	vector<string> value;
@@ -93,8 +102,6 @@ void insert_index(update_index_info info);
 location delete_index(search_info info);//find the position
 void delete_index(update_index_info);
 //throw exception "deleteindex_error"
-
-
 
 //////////////////////////////////////////////////////////////////////
 //API to record
