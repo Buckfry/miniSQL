@@ -10,10 +10,10 @@
 
 #include<iostream>
 #include<string>
-#include<FunctionOfIndex&Record.h>
 #include"block1.h"
 #include"BufferManager.h"
 #include"sql.h"
+#include"publichead.h"
 using namespace std;
 
 #define MAX_ATTR_NUM 18
