@@ -43,7 +43,6 @@ public:
 };
 class RecordManager {
 private:
-	BufferManager datamanager;
 	fileHead fh;
 	record_fileInfo fi;
 

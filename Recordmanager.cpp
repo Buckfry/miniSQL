@@ -219,7 +219,7 @@ keyinfo& RecordManager::getkeyinfo(string DB_name,string filename,string keyname
 	vector<int> attrnum(findposition(fi.attribute_name,temp));
 	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
 	    {
-	    	datablock(*(datamanager.readBlock(filename,searchblock)));
+	    	datablock=(*(datamanager.readBlock(filename,searchblock)));
 	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
 	    	{
 	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
@@ -248,7 +248,7 @@ void RecordManager::Delete_No_Where(string DB_name,string filename,attr_info att
 	block datablock;
 	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
 	    {
-	    	datablock(*(datamanager.readBlock(filename,searchblock)));
+	    	datablock=(*(datamanager.readBlock(filename,searchblock)));
 	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
 	    	{
 	    		for(int i =0;i!=fi.recordLength;i++)
@@ -452,7 +452,7 @@ void RecordManager::Select_Without_Useful_Cond(string DB_name,string filename,ve
     this->printhead(attr);
     for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
     {
-    	datablock(*(datamanager.readBlock(filename,searchblock)));
+    	datablock=(*(datamanager.readBlock(filename,searchblock)));
     	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
     	{
     		vector<string> attrvalue;
@@ -484,7 +484,7 @@ vector<vector<string>>& RecordManager::Delete_Without_Useful_Cond(string DB_name
 
 	    for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
 	    {
-	    	datablock(*(datamanager.readBlock(filename,searchblock)));
+	    	datablock=(*(datamanager.readBlock(filename,searchblock)));
 	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
 	    	{
 	    		vector<string> attrvalue;
@@ -526,7 +526,7 @@ void RecordManager::Select_With_Useful_Cond(string DB_name,string filename,vecto
     this->printhead(attr);
     for(vector<recordposition>::iterator po=rp.begin();po!=rp.end();po++)
     {
-    	datablock(*(datamanager.readBlock(filename,(*po).blocknum)));
+    	datablock=(*(datamanager.readBlock(filename,(*po).blocknum)));
 
    		vector<string> attrvalue;
    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
