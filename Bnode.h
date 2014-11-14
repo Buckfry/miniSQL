@@ -1,78 +1,58 @@
 /*
  * Bnode.h
  *
- *  Created on: 2014��11��2��
+ *  Created on: 2014年11月11日
  *      Author: Administrator
  */
 
 #ifndef BNODE_H_
 #define BNODE_H_
-#include<iostream>
-#include"FunctionOfIndex&Record.h";
+
+#include "Buffermanager.h";
+#include "headforBnode.h";
+#include<math.h>
+
 using namespace std;
-
-//class location
-//{
-//
-//};
-//class attribute_info
-//{
-//public:
-//	string table_name;
-//	string attribute_name;
-//	string type;//int, float or char
-//	string index_name;
-//	int lengh;//type's length(especially for char)
-//	vector<string> data;
-//	vector<string> position;
-//};
-//
-//class search_info
-//{
-//public:
-//	string tablename;
-//	string atbname;//attribute name
-//	string index_name;
-//	vector<string> condition;// = or <= or >= or < or >
-//	vector<location> value;
-//};
-
 class Bnode {
 public:
-	Bnode();
+
+	Bnode(string name);
 	virtual ~Bnode();
-	int point_num;
-	bool isleaf;
-	vector<string> values;
-	vector<string> pointer;
-	string father;
-	string next;
-public:
-	string search(attribute_info atb_info);
-	void insert(attribute_info attribute);
-	void createindex_index(attribute_info info);
-
-
-};
-
-class Binfo
-{
-public:
-	int length=0;
-	string indexname="";
-	string firstleaf="";//第一个叶节点位置，4字节长
-	string empty="";//第一个空块位置，4字节长
-	Binfo(string data)
+	void createindex(int length,keyinfo info);
+	void InserttoIndex(string value,keyinfo info);
+	void insert_index(string value,string loc);
+	string tostring(int a);
+	int toint(string s);
+	void deleteindex(string value);
+	void drop_index()
 	{
-		int i;
-		for(i=0;i<4;i++)
-		{
-			length+=(data[i]-'0')*10;
-		}
-		indexname = data.substr(4,8);
-		firstleaf = data.substr(8,12);
-		empty = data.substr(12,16);
+		datamanager.deleteTable(index_name);
 	}
+	vector<recordposition> searchbyindex(vector<string>condition,vector<string> value)
+	{
+		vector<recordposition> r;
+		index_location &temp =search(condition,value);
+		for(int i=0;i<temp.record_position.size();i++)
+		{
+			recordposition tr;
+			tr.blocknum=toint(temp.record_position[i].substr(0,4));
+			tr.recordnum=toint(temp.record_position[i].substr(4,8));
+			r.push_back(tr);
+		}
+		return r;
+	}
+
+private:
+	index_location search(vector<string>condition,vector<string> value);
+	void split(int position,bool isleft);
+	string update(int position,string child,string old,string value);
+	bool showresult(string condition,string input,string value);
+	void update_value(int position,string value,string child);
+	void delete_update(int position);
+	int fanout;
+	int length;  //节点中value长度
+	string index_name;
+	int blocknum;
 };
 
 #endif /* BNODE_H_ */
