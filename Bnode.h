@@ -19,7 +19,7 @@ public:
 	Bnode(string name);
 	virtual ~Bnode();
 	void createindex(int length,keyinfo info);
-	void InserttoIndex(string value,keyinfo info);
+	void InserttoIndex(string value,recordposition info);
 	void deleteindex(string value);
 	void drop_index(string name)
 	{
