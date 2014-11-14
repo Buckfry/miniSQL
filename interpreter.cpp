@@ -40,7 +40,7 @@ void initSQL(SQL &sql) {   //初始化SQL结构
     sql.operators.clear();
     sql.logicalOperators.clear();
     sql.isUnique.clear();
-	sql.aux.clear();                //this is same as result??????
+	sql.aux.clear();
 }
 
 bool interpret(istringstream& in, SQL& sql) {

@@ -21,9 +21,10 @@ class location
 class create_record{
 public:
 	string table_name;
-	vector<char> attribute_name;//属性名
-	vector<char> attribute_type;//属性类型
-	vector<int> attribute_length;//属性长度(每个属性的字节数)
+	//vector<char> attribute_name;//属性名
+	//vector<char> attribute_type;//属性类型
+	int attribute_num; //属性数目
+	//vector<int> attribute_length;//属性长度(每个属性的字节数)
 
 };
 
@@ -44,7 +45,7 @@ public:
 	string index_name;
 	int lengh;//type's length(especially for char)
 	string attribute_name;
-	string type;//int, float or char
+	int type;//int, float or char
 	vector<string> data;
 	vector<string> position;
 };
