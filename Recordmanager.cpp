@@ -77,7 +77,7 @@ void RecordManager::create_table(string DB_name,create_record data)
 
 }
 //向表中插入元组,同时返回插入位置
-recordposition& RecordManager::insert_record(string DB_name,string filename,vector<string> attr,attr_info attribute_info)
+recordposition& RecordManager::insert_record(string DB_name,string filename,vector<string> attrvalue,attr_info attribute_info)
 {
 	this->focus_current_db(DB_name);
     getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
@@ -98,15 +98,16 @@ recordposition& RecordManager::insert_record(string DB_name,string filename,vect
 
 
     int i=fi.recordcount*fi.recordLength;
-    datablock(*(databuffer.readBlock(filename,(fi.currentblocknum-1))));
+    datablock=(*(databuffer.readBlock(filename,(fi.currentblocknum-1))));
+    string data(datablock.data,i);
 
-    for(vector<char>::iterator it=attr.begin(); it!=attr.end();it++,i++)
+    for(vector<string>::iterator it=attrvalue.begin(); it!=attrvalue.end();it++,i++)
     {
-    	datablock.data[i]=*it;
-
+    	data+=*it;
     }
 
     fi.recordcount++;
+    datablock.data=data.c_str();
     char* p=&(datablock.data);
     databuffer.insertBlock(filename,(fi.currentblocknum-1),p);
     databuffer.updateFileInfo(filename,this->translate_fileinfo(fi));
@@ -115,9 +116,9 @@ recordposition& RecordManager::insert_record(string DB_name,string filename,vect
     return rp;
 }
 //打印属性值
-void RecordManager::Print(vector<char> attr)
+void RecordManager::Print(vector<string> attr)
 {
-	for(vector<char>::iterator it=attr.begin();it!=attr.end();it++)
+	for(vector<string>::iterator it=attr.begin();it!=attr.end();it++)
 	{
 		cout<<"\t"<<*it;
 	}
@@ -136,39 +137,39 @@ void RecordManager::printhead(vector<string> attr)
 vector<int>& RecordManager::findposition(vector<string>attr,vector<string>searchedattr)
 {
 	vector<int> selected_attr;
-    for(vector<char>::iterator it=searchedattr.begin();it!=searchedattr.end();it++)
+    for(vector<string>::iterator it=searchedattr.begin();it!=searchedattr.end();it++)
     {
-    	   vector<char>::iterator findit = find(attr.begin(),attr.end(),*it);
+    	   vector<string>::iterator findit = find(attr.begin(),attr.end(),*it);
     	   int num=0;
-           for(vector<char>::size_type n=findit-attr.begin();n--!=0;num++)
+           for(vector<string>::size_type n=findit-attr.begin();n--!=0;num++)
            {
         	   selected_attr.push_back(num);
            }
     }
     return selected_attr;
 }
-//选择语句（无where）且无索引
-void RecordManager::Select_Without_Useful_No_Where(string DB_name,string filename,vector<string> attr,attr_info attribute_info)
-{
-	this->focus_current_db(DB_name);
-	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
-	block datablock;
-	vector<int> attrnum(findposition(fi.attribute_name,attr));
-	this->printhead(attr);
-	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
-	    {
-	    	datablock(*(databuffer.readBlock(filename,searchblock)));
-	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
-	    	{
-	    		vector<char> attrvalue;
-	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
-	    		{
-	    			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
-	    		}
-	    		this->Print(attrvalue);
-	    	}
-	    }
-}
+////选择语句（无where）且无索引
+//void RecordManager::Select_Without_Useful_No_Where(string DB_name,string filename,vector<string> attr,attr_info attribute_info)
+//{
+//	this->focus_current_db(DB_name);
+//	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
+//	block datablock;
+//	vector<int> attrnum(findposition(fi.attribute_name,attr));
+//	this->printhead(attr);
+//	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
+//	    {
+//	    	datablock=(*(databuffer.readBlock(filename,searchblock)));
+//	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
+//	    	{
+//	    		vector<char> attrvalue;
+//	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
+//	    		{
+//	    			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
+//	    		}
+//	    		this->Print(attrvalue);
+//	    	}
+//	    }
+//}
 //选择语句（无where）有索引
 void RecordManager::Select_With_Useful_No_Where(string DB_name,string filename,vector<string> attr,vector<recordposition> rp,attr_info attribute_info)
 {

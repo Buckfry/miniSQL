@@ -38,7 +38,7 @@ class condition_info
 {
 public:
 	vector<string> conditionattr;
-	vector<char> comparedvalue;
+	vector<string> comparedvalue;
 	vector<string>  condition;//= , <>, <, >,<= , >=
 };
 class RecordManager {
@@ -54,7 +54,7 @@ private:
 	//更新fi
 	void getfileinfo(string fileinfo,attr_info attribute_info,string filename);
 	//打印属性值
-	void Print(vector<char> attrvalue);
+	void Print(vector<string> attrvalue);
 	//打印表头
 	void printhead(vector<string> attr);
 	//找出所查找的属性在attr中的位置
@@ -75,8 +75,8 @@ public:
 	void create_table(string DB_name,create_record data);
 	//向表中插入元组,同时返回所插入元组的位置
 	recordposition& insert_record(string DB_name,string filename,vector<string> attr,attr_info attribute_info);
-	//选择语句（无where）且无索引
-	void Select_Without_Useful_No_Where(string DB_name,string filename,vector<string> attr,attr_info attribute_info);
+//	//选择语句（无where）且无索引
+//	void Select_Without_Useful_No_Where(string DB_name,string filename,vector<string> attr,attr_info attribute_info);
 	//选择语句（无where）有索引
 	void Select_With_Useful_No_Where(string DB_name,string filename,vector<string> attr,vector<recordposition> rp,attr_info attribute_info);
 	//有where，但无可用索引的select语句
