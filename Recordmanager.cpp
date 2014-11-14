@@ -28,21 +28,21 @@ RecordManager::~RecordManager() {
 
 void RecordManager::focus_current_db(string DB_name)
 {
-	if(DB_name!=databuffer.DBname)
-					databuffer.setDatabase(DB_name);
+	if(DB_name!=datamanager.DBname)
+					datamanager.setDatabase(DB_name);
 }
 //释放数据库的内存缓冲区
 void RecordManager::Close_Database(string DB_name)
 {
 	this->focus_current_db(DB_name);
-        databuffer.closeDatabase();
+        datamanager.closeDatabase();
 }
 //释放表或索引的内存缓冲区
 void RecordManager::Close_File(string DB_name, string filename)
 {
-	if(DB_name!=databuffer.DBname)
-					databuffer.setDatabase(DB_name);
-	databuffer.closeFile(filename);
+	if(DB_name!=datamanager.DBname)
+					datamanager.setDatabase(DB_name);
+	datamanager.closeFile(filename);
 }
 //把fileinfo转为char*存储
 char* RecordManager::translate_fileinfo(record_fileInfo fi)
@@ -73,14 +73,14 @@ void RecordManager::create_table(string DB_name,create_record data)
     fi.currentblocknum=1;
     fi.recordcount=0;
 
-    databuffer.createTable(data.table_name,translate_fileinfo(this-> fi));
+    datamanager.createTable(data.table_name,translate_fileinfo(this-> fi));
 
 }
 //向表中插入元组,同时返回插入位置
 recordposition& RecordManager::insert_record(string DB_name,string filename,vector<string> attrvalue,attr_info attribute_info)
 {
 	this->focus_current_db(DB_name);
-    getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
+    getfileinfo(datamanager.getFileInfo(filename),attribute_info,filename);
     block datablock;
     recordposition rp;
 
@@ -98,7 +98,7 @@ recordposition& RecordManager::insert_record(string DB_name,string filename,vect
 
 
     int head=fi.recordcount*fi.recordLength;
-    datablock=(*(databuffer.readBlock(filename,(fi.currentblocknum-1))));
+    datablock=(*(datamanager.readBlock(filename,(fi.currentblocknum-1))));
     string data(datablock.data,head);
     int focus_attr=0;
     for(vector<string>::iterator it=attrvalue.begin(); it!=attrvalue.end();it++,focus_attr++)
@@ -112,8 +112,8 @@ recordposition& RecordManager::insert_record(string DB_name,string filename,vect
     fi.recordcount++;
     datablock.data=data.c_str();
     char* p=&(datablock.data);
-    databuffer.insertBlock(filename,(fi.currentblocknum-1),p);
-    databuffer.updateFileInfo(filename,this->translate_fileinfo(fi));
+    datamanager.insertBlock(filename,(fi.currentblocknum-1),p);
+    datamanager.updateFileInfo(filename,this->translate_fileinfo(fi));
     rp.blocknum=(fi.currentblocknum-1);
     rp.recordnum=fi.recordcount;
     return rp;
@@ -155,13 +155,13 @@ vector<int>& RecordManager::findposition(vector<string>attr,vector<string>search
 void RecordManager::Select_No_Where(string DB_name,string filename,vector<string> attr,attr_info attribute_info)
 {
 	this->focus_current_db(DB_name);
-	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
+	 getfileinfo(datamanager.getFileInfo(filename),attribute_info,filename);
 	block datablock;
 	vector<int> attrnum(findposition(fi.attribute_name,attr));
 	this->printhead(attr);
 	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
 	    {
-	    	datablock=(*(databuffer.readBlock(filename,searchblock)));
+	    	datablock=(*(datamanager.readBlock(filename,searchblock)));
 	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
 	    	{
 	    		vector<string> attrvalue;
@@ -208,7 +208,7 @@ void RecordManager::Select_No_Where(string DB_name,string filename,vector<string
 keyinfo& RecordManager::getkeyinfo(string DB_name,string filename,string keyname,attr_info attribute_info)
 {
 	this->focus_current_db(DB_name);
-	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
+	 getfileinfo(datamanager.getFileInfo(filename),attribute_info,filename);
 	vector<string> temp;
 	temp.push_back(keyname);
 	keyinfo keyinformation;
@@ -219,7 +219,7 @@ keyinfo& RecordManager::getkeyinfo(string DB_name,string filename,string keyname
 	vector<int> attrnum(findposition(fi.attribute_name,temp));
 	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
 	    {
-	    	datablock(*(databuffer.readBlock(filename,searchblock)));
+	    	datablock(*(datamanager.readBlock(filename,searchblock)));
 	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
 	    	{
 	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
@@ -244,11 +244,11 @@ keyinfo& RecordManager::getkeyinfo(string DB_name,string filename,string keyname
 void RecordManager::Delete_No_Where(string DB_name,string filename,attr_info attribute_info)
 {
 	this->focus_current_db(DB_name);
-	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
+	 getfileinfo(datamanager.getFileInfo(filename),attribute_info,filename);
 	block datablock;
 	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
 	    {
-	    	datablock(*(databuffer.readBlock(filename,searchblock)));
+	    	datablock(*(datamanager.readBlock(filename,searchblock)));
 	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
 	    	{
 	    		for(int i =0;i!=fi.recordLength;i++)
@@ -257,11 +257,11 @@ void RecordManager::Delete_No_Where(string DB_name,string filename,attr_info att
 	    		}
 	    	}
 	        char* p=&(datablock.data);
-	        databuffer.updateBlock(filename,searchblock,p);
+	        datamanager.updateBlock(filename,searchblock,p);
 	    }
 	fi.currentblocknum=1;
 	fi.recordcount=0;
-    databuffer.updateFileInfo(filename,this->translate_fileinfo(fi));
+    datamanager.updateFileInfo(filename,this->translate_fileinfo(fi));
 }
 //判断是否符合条件condition
 bool RecordManager::Confirm(vector<string> attr,vector<string> attrvalue, condition_info condition)
@@ -446,13 +446,13 @@ bool RecordManager::Confirm(vector<string> attr,vector<string> attrvalue, condit
 void RecordManager::Select_Without_Useful_Cond(string DB_name,string filename,vector<string> attr,condition_info cond,attr_info attribute_info)
 {
 	this->focus_current_db(DB_name);
-	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
+	 getfileinfo(datamanager.getFileInfo(filename),attribute_info,filename);
     block datablock;
     vector<int> attrnum(findposition(fi.attribute_name,attr));
     this->printhead(attr);
     for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
     {
-    	datablock(*(databuffer.readBlock(filename,searchblock)));
+    	datablock(*(datamanager.readBlock(filename,searchblock)));
     	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
     	{
     		vector<string> attrvalue;
@@ -475,7 +475,7 @@ void RecordManager::Select_Without_Useful_Cond(string DB_name,string filename,ve
 vector<vector<string>>& RecordManager::Delete_Without_Useful_Cond(string DB_name,string filename,condition_info cond,attr_info attribute_info,vector<string> indexattr)
 {
 	this->focus_current_db(DB_name);
-	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
+	 getfileinfo(datamanager.getFileInfo(filename),attribute_info,filename);
 	 vector<string> indexvalue;
 	 vector<vector<string>> indexvalues;
 	    block datablock;
@@ -484,7 +484,7 @@ vector<vector<string>>& RecordManager::Delete_Without_Useful_Cond(string DB_name
 
 	    for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
 	    {
-	    	datablock(*(databuffer.readBlock(filename,searchblock)));
+	    	datablock(*(datamanager.readBlock(filename,searchblock)));
 	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
 	    	{
 	    		vector<string> attrvalue;
@@ -512,7 +512,7 @@ vector<vector<string>>& RecordManager::Delete_Without_Useful_Cond(string DB_name
 	    		}
 	    	}
 	        char* p=&(datablock.data);
-	        databuffer.updateBlock(filename,searchblock,p);
+	        datamanager.updateBlock(filename,searchblock,p);
 	    }
 	    return indexvalues;
 }
@@ -520,13 +520,13 @@ vector<vector<string>>& RecordManager::Delete_Without_Useful_Cond(string DB_name
 void RecordManager::Select_With_Useful_Cond(string DB_name,string filename,vector<string> attr,vector<recordposition> rp,condition_info cond,attr_info attribute_info)
 {
 	this->focus_current_db(DB_name);
-	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
+	 getfileinfo(datamanager.getFileInfo(filename),attribute_info,filename);
     block datablock;
     vector<int> attrnum(findposition(fi.attribute_name,attr));
     this->printhead(attr);
     for(vector<recordposition>::iterator po=rp.begin();po!=rp.end();po++)
     {
-    	datablock(*(databuffer.readBlock(filename,(*po).blocknum)));
+    	datablock(*(datamanager.readBlock(filename,(*po).blocknum)));
 
    		vector<string> attrvalue;
    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
@@ -546,7 +546,7 @@ void RecordManager::Select_With_Useful_Cond(string DB_name,string filename,vecto
 vector<vector<string>>& RecordManager::Delete_With_Useful_Cond(string DB_name,string filename,vector<recordposition> rp,condition_info cond,attr_info attribute_info,vector<string> indexattr)
 {
 	this->focus_current_db(DB_name);
-	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
+	 getfileinfo(datamanager.getFileInfo(filename),attribute_info,filename);
 	 vector<string> indexvalue;
 	 vector<vector<string>> indexvalues;
 	    block datablock;
@@ -555,7 +555,7 @@ vector<vector<string>>& RecordManager::Delete_With_Useful_Cond(string DB_name,st
 
 	    for(vector<recordposition>::iterator po=rp.begin();po!=rp.end();po++)
 	    {
-	    	datablock=(*(databuffer.readBlock(filename,(*po).blocknum)));
+	    	datablock=(*(datamanager.readBlock(filename,(*po).blocknum)));
 	   		vector<string> attrvalue;
 	    	for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
 	    	{
@@ -580,7 +580,7 @@ vector<vector<string>>& RecordManager::Delete_With_Useful_Cond(string DB_name,st
 	    		 indexvalues.push_back(indexvalue);
 	    	}
 	       char* p=&(datablock.data);
-	       databuffer.updateBlock(filename,(*po).blocknum,p);
+	       datamanager.updateBlock(filename,(*po).blocknum,p);
 	   }
 	    return indexvalues;
 }
@@ -588,13 +588,13 @@ vector<vector<string>>& RecordManager::Delete_With_Useful_Cond(string DB_name,st
 void RecordManager::Drop_Table(string DB_name, string filename)
 {
 	this->focus_current_db(DB_name);
-	databuffer.deleteTable(filename);
+	datamanager.deleteTable(filename);
 }
 //退出数据库
 void RecordManager::Quit(string DB_name)
 {
 	this->focus_current_db(DB_name);
-	databuffer.closeDatabase();
+	datamanager.closeDatabase();
 }
 
 
