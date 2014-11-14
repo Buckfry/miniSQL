@@ -25,9 +25,9 @@ public:
 	string tostring(int a);
 	int toint(string s);
 	void deleteindex(string value);
-	void drop_index()
+	void drop_index(string name)
 	{
-		datamanager.deleteTable(index_name);
+		datamanager.deleteTable(name);
 	}
 	vector<recordposition> searchbyindex(vector<string>condition,vector<string> value)
 	{
