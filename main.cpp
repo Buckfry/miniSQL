@@ -8,6 +8,8 @@
 #include "sql.h"
 #include "Interpreter.h"
 #include "APIModule.h"
+#include "publichead.h"
+#include "BufferManager.h"
 #include <iostream>
 #include <sstream>
 using namespace std;
@@ -54,6 +56,7 @@ using namespace std;
     cout << endl;
 }
 */
+
 
 int main()
 {

@@ -17,6 +17,8 @@
 #include "filehead.h"
 using namespace std;
 
+
+
 #define MAX_FILE_ACTIVE 	5		// limit the active files in the buffer
 #define MAX_BLOCK			40		// the max number of the blocks
 

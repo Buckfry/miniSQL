@@ -8,12 +8,11 @@
 #ifndef BNODE_H_
 #define BNODE_H_
 
-#include "Buffermanager.h";
-#include "headforBnode.h";
-#include "publichead.h";
+#include "Buffermanager.h"
+#include "headforBnode.h"
+#include "publichead.h"
 #include <math.h>
 #include <stdlib.h>
-
 using namespace std;
 class Bnode {
 public:
