@@ -95,9 +95,8 @@ void Bnode::insert_index(string value,string loc)
 		/////////////////////
 		//找到块号position
 		////////////////////
-		vector<string> a;
-		vector<string> b;
-		b.push_back(value);
+		string a;
+		string b = value;
 		int temp;
 		bool isleft;
 		try
@@ -410,87 +409,78 @@ index_location Bnode::search(string condition,string value)
 	int blocknum=0; //第几块
 	int number=0;  //具体位置
 	vector<string> record_postion; //指针
-	for(int i=0;i<value.size();i++)         //总循环
+
+	if (condition.size() == 0 || condition == "=")    //搜索为=时
 	{
-
-		if(condition.size()==0||condition[i]=="=")    //搜索为=时
+		block* blk = datamanager.readBlock(index_name, 1);
+		string content = blk->data;
+		while (content[0] == '1')  //为非叶节点时
 		{
-			block* blk = datamanager.readBlock(index_name,1);
-			string content = blk->data;
-			while(content[0]=='1')  //为非叶节点时
-			{
-				int value_number = toint(content.substr(1,3));
-				int j,temp;
-				for(j=0;j<value_number;j++)
-				{
-					temp = j*(length+4)+16;
-					if(content.substr(temp+4,length)>value[i])
-					{
-						blk = datamanager.readBlock(index_name,toint(content.substr(temp,4)));
-						content = blk->data;
-						break;
-					}
-				}
-				if(j==value_number)
-				{
-					blk = datamanager.readBlock(index_name,toint(content.substr(temp+4+length,4)));
+			int value_number = toint(content.substr(1, 3));
+			int j, temp;
+			for (j = 0; j < value_number; j++) {
+				temp = j * (length + 4) + 16;
+				if (content.substr(temp + 4, length) > value) {
+					blk = datamanager.readBlock(index_name,
+							toint(content.substr(temp, 4)));
 					content = blk->data;
+					break;
 				}
 			}
-
-			blocknum = toint(content.substr(8,4));
-			int j,temp;
-			int value_number = toint(content.substr(1,3));
-			if (condition.size() == 0)   //表明这是为insert的插入
-			{
-				for (j = 0; j < value_number; j++) {
-					temp = j * (8 + length) + 20;
-					if (content.substr(temp + 8, length) == value[i]) //表明插入失敗，原值已存在
-						throw insert_index_error();         //抛出异常
-					if (content.substr(temp + 8, length)
-							> value[i]) {
-						break;
-					}
-				}
-				number = j;
-			}
-
-			else            //等值查询
-			{
-				for (j = 0; j < value_number; j++) {
-					temp = j * (8 + length) + 20;
-					if (content.substr(temp + 8,  length) == value[i]) //找到了
-					{
-						number = j;
-						record_postion.push_back(content.substr(temp,8));
-						break;
-					}
-				}
-				if(j==value_number)
-				{
-					throw not_found();
-				}
+			if (j == value_number) {
+				blk = datamanager.readBlock(index_name,
+						toint(content.substr(temp + 4 + length, 4)));
+				content = blk->data;
 			}
 		}
-		else       //非等值查询
-		{
-			int leaf_num=toint(head.substr(4,4));
-			while(leaf_num!=0)
-			{
-				block* blk = datamanager.readBlock(index_name, leaf_num);
-				string content = blk->data;
-				int j, temp;
-				int value_number = toint(content.substr(1, 3));
-				for (j = 0; j < value_number; j++) {
-					temp = j * (8 + length) + 20;
-					if (showresult(condition[i], value[i],
-							content.substr(temp + 8,  length))) {
-						record_postion.push_back(
-								content.substr(temp,  8));
-					}
+
+		blocknum = toint(content.substr(8, 4));
+		int j, temp;
+		int value_number = toint(content.substr(1, 3));
+		if (condition.size() == 0)   //表明这是为insert的插入
+				{
+			for (j = 0; j < value_number; j++) {
+				temp = j * (8 + length) + 20;
+				if (content.substr(temp + 8, length) == value) //表明插入失敗，原值已存在
+					throw insert_index_error();         //抛出异常
+				if (content.substr(temp + 8, length) > value) {
+					break;
 				}
-				leaf_num = toint(content.substr(16,4));        //找下一临近的叶节点
 			}
+			number = j;
+		}
+
+		else            //等值查询
+		{
+			for (j = 0; j < value_number; j++) {
+				temp = j * (8 + length) + 20;
+				if (content.substr(temp + 8, length) == value) //找到了
+						{
+					number = j;
+					record_postion.push_back(content.substr(temp, 8));
+					break;
+				}
+			}
+			if (j == value_number) {
+				throw not_found();
+			}
+		}
+	} else       //非等值查询
+	{
+		int leaf_num = toint(head.substr(4, 4));
+		while (leaf_num != 0) {
+			block* blk = datamanager.readBlock(index_name, leaf_num);
+			string content = blk->data;
+			int j, temp;
+			int value_number = toint(content.substr(1, 3));
+			for (j = 0; j < value_number; j++) {
+				temp = j * (8 + length) + 20;
+				if (showresult(condition, value,
+						content.substr(temp + 8, length))) {
+					record_postion.push_back(content.substr(temp, 8));
+				}
+			}
+			leaf_num = toint(content.substr(16, 4));        //找下一临近的叶节点
 		}
 	}
 	index_location result(blocknum,number,record_postion);

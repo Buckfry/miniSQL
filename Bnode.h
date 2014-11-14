@@ -16,7 +16,6 @@
 using namespace std;
 class Bnode {
 public:
-
 	Bnode(string name);
 	virtual ~Bnode();
 	void createindex(int length,keyinfo info);

@@ -58,6 +58,7 @@ public:
     
     
     block* readBlock(string fileName, int blockNum);
+    void updateBlock(string fileName,int blockNum);
     void updateBlock(string fileName,int blockNum,char*newdata);
     void insertBlock(string fileName,int blockNum,char*data);
     
