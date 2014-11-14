@@ -67,7 +67,8 @@ void RecordManager::create_table(string DB_name,create_record data)
 {
 	this->focus_current_db(DB_name);
 
-	fi.recordLength=data.attribute_num;
+	fi.recordLength=0;
+	for(vector<int>::iterator it=data.attribute_length.begin();it!=data.attribute_length.end();it++,fi.recordLength+=*it);
     fi.recordAmount=BLOCK_LEN/fi.recordLength;
     fi.currentblocknum=1;
     fi.recordcount=0;
@@ -86,7 +87,7 @@ recordposition& RecordManager::insert_record(string DB_name,string filename,vect
      if(fi.recordcount>fi.recordAmount)
      {
     	 if(fi.currentblocknum>MAX_BLOCK)
-    		 throw("This table is filled, you cann't add this tulpe into it!");
+    		 cout<<("This table is filled, you cann't add this tulpe into it!")<<endl;
     	 else
     	 {
     		 fi.currentblocknum++;
