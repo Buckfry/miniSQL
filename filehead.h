@@ -21,8 +21,8 @@ public:
     string filename;
     int age;
     char fileInfo[OFFSET];
-    fileHead();
-    ~fileHead();
+    fileHead(){};
+    ~fileHead(){};
     void initFileHead();
     //private:
     bool dirty;

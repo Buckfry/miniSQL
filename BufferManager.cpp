@@ -12,16 +12,6 @@
 #include "BufferManager.h"
 using namespace std;
 
-//fileHead
-/*void fileHead::initFileHead(){
-    age=0;
-    dirty=false;
-    filename="";
-    writen=false;
-    for(int j=0;j<OFFSET;j++)
-        fileInfo[j]='\0';
-    
-}*/
 
 //BufferManager
 BufferManager::BufferManager(){
@@ -30,7 +20,7 @@ BufferManager::BufferManager(){
 
 
 BufferManager::BufferManager(string DB_Name){
-    DBname=DB_Name;
+    DBname="./Mini_Data/"+DB_Name;
     this->initBuffer();
 }
 
@@ -83,17 +73,18 @@ fileHead* BufferManager::findFreeFileHead(){//clear block
 
 void BufferManager::writeBlock(block * w_block){//to disk,not clear buf
     if(!w_block->dirty) return;
-    string path=DBname+"/"+w_block->fileName;
+    string path=DBname+"/"+w_block->fileName+".txt";
     fstream fout;
     fout.open(path.c_str(),ios::in|ios::out);
     fout.seekp(BLOCK_LEN*w_block->blockNum+OFFSET,fout.beg);
     fout.write(w_block->data,BLOCK_LEN);
     fout.close();//not clear buffer
+    w_block->dirty=false;
 }
 
 void BufferManager::Write_File_Info_Disk(fileHead *fileH){//to disk,not clear buf
     if(!fileH->dirty) return;
-    string path=DBname+"/"+fileH->filename;
+    string path=DBname+"/"+fileH->filename+".txt";
     fstream fout;
     fout.open(path.c_str(),ios::in|ios::out);
     fout.seekp(0,fout.beg);
@@ -103,16 +94,16 @@ void BufferManager::Write_File_Info_Disk(fileHead *fileH){//to disk,not clear bu
 
 void BufferManager::Get_Block_Disk(string File_Name,int blockNum,char data[]){//from disk
     //char tmp[BLOCK_LEN];
-    string path=DBname+"/"+File_Name;
+    string path=DBname+"/"+File_Name+".txt";
     fstream fin;
     fin.open(path.c_str(),ios::in);
     fin.seekg(OFFSET+BLOCK_LEN*blockNum,fin.beg);
-    fin.read(data,OFFSET);
+    fin.read(data,BLOCK_LEN);
     fin.close();
 }
 void BufferManager::Get_File_Info_Disk(string File_Name,char getInfo[]){//from disk
     //char tmp[OFFSET];
-    string path=DBname+"/"+File_Name;
+    string path=DBname+"/"+File_Name+".txt";
     fstream fin;
     fin.open(path.c_str(),ios::in);
     fin.seekg(0,fin.beg);
@@ -125,7 +116,7 @@ string BufferManager::getDatabase(){
     return DBname;
 }
 void BufferManager::setDatabase(string DB_Name){
-    DBname=DB_Name;
+    DBname="./Mini_Data/"+DB_Name;
 }
 
 void BufferManager::closeFile(string fileName){
@@ -165,7 +156,7 @@ string  BufferManager::getFileInfo(string fileName){
                     fileHlist[j].age++;
             }
             ret=fileHlist[i].fileInfo;
-            return ret;
+            return ret.substr(0,16);
             
         }
     //char ret[OFFSET];
@@ -217,7 +208,7 @@ void BufferManager::createTable(string tableName,char* fileInfo){
             fileHlist[k].age++;
     }
     //create file
-    string path=DBname+"/"+tableName;
+    string path=DBname+"/"+tableName+".txt";
     fstream fcreate;
     fcreate.open(path.c_str(),ios::out);
     if(!fcreate){
@@ -236,7 +227,7 @@ void BufferManager::deleteTable(string tableName){
         if(Buffer[i].writen&&Buffer[i].fileName==tableName)
             Buffer[i].initial();
     }
-    string path=DBname+"/"+tableName;//remove file
+    string path=DBname+"/"+tableName+".txt";//remove file
     remove(path.c_str());
 }
 
@@ -280,9 +271,27 @@ void BufferManager::updateBlock(string fileName,int blockNum,char newdata[]){
     }
 }
 
+void BufferManager::updateBlock(string fileName,int blockNum){
+    for(int i=0;i<MAX_BLOCK;i++){//must in buffer
+        if(Buffer[i].writen&&Buffer[i].fileName==fileName&&Buffer[i].blockNum==blockNum){
+            Buffer[i].dirty=true;
+            Buffer[i].iTime=0;
+            for(int k=0;k<MAX_BLOCK;k++){
+                if(i!=k&&Buffer[k].writen)
+                    Buffer[k].iTime++;
+            }
+            return;
+        }
+        
+    }
+
+
+}
+
 void BufferManager::insertBlock(string fileName,int blockNum,char*data){
     block*tmp=findFreeBlock();
     tmp->writen=true;//set block
+    tmp->dirty=true;
     tmp->blockNum=blockNum;
     tmp->fileName=fileName;
     tmp->iTime=0;

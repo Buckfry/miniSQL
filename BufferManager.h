@@ -49,7 +49,7 @@ public:
     void closeFile(string fileName);
     void closeDatabase();
     
-    string  getFileInfo(string fileName);//modify!!!!
+    string  getFileInfo(string fileName);
     void updateFileInfo(string fileName,char* fileInfo);
     
     void createTable(string tableName,char* fileInfo);
@@ -60,6 +60,7 @@ public:
     block* readBlock(string fileName, int blockNum);
     void updateBlock(string fileName,int blockNum);
     void updateBlock(string fileName,int blockNum,char*newdata);
+    void updateBlock(string fileName,int blockNum);
     void insertBlock(string fileName,int blockNum,char*data);
     
 private:
