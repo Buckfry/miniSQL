@@ -55,10 +55,7 @@ class keyinfo{
 public:
 	string keyname;
 	vector<pair<string,recordposition>> keys;	//存储键值和对应的位置
-	keyinfo()
-	{
-		keys = new vector<pair<string,recordposition>>;
-	}
+
 };
 
 

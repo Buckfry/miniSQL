@@ -399,7 +399,7 @@ void Bnode::update_value(int position,string value,string child)
 }
 
 
-index_location Bnode::search(vector<string> condition,vector<string> value)
+index_location Bnode::search(string condition,string value)
 {
 	string head = datamanager.getFileInfo(index_name);
 	length = toint(head.substr(8,4));

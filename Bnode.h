@@ -21,15 +21,12 @@ public:
 	virtual ~Bnode();
 	void createindex(int length,keyinfo info);
 	void InserttoIndex(string value,keyinfo info);
-	void insert_index(string value,string loc);
-	string tostring(int a);
-	int toint(string s);
 	void deleteindex(string value);
 	void drop_index(string name)
 	{
 		datamanager.deleteTable(name);
 	}
-	vector<recordposition> searchbyindex(vector<string>condition,vector<string> value)
+	vector<recordposition> searchbyindex(string condition,string value)
 	{
 		vector<recordposition> r;
 		index_location &temp =search(condition,value);
@@ -44,7 +41,10 @@ public:
 	}
 
 private:
-	index_location search(vector<string>condition,vector<string> value);
+	void insert_index(string value,string loc);
+	string tostring(int a);
+	int toint(string s);
+	index_location search(string condition,string value);
 	void split(int position,bool isleft);
 	string update(int position,string child,string old,string value);
 	bool showresult(string condition,string input,string value);
