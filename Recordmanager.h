@@ -75,10 +75,10 @@ public:
 	void create_table(string DB_name,create_record data);
 	//向表中插入元组,同时返回所插入元组的位置
 	recordposition& insert_record(string DB_name,string filename,vector<string> attr,attr_info attribute_info);
-//	//选择语句（无where）且无索引
-//	void Select_Without_Useful_No_Where(string DB_name,string filename,vector<string> attr,attr_info attribute_info);
-	//选择语句（无where）有索引
-	void Select_With_Useful_No_Where(string DB_name,string filename,vector<string> attr,vector<recordposition> rp,attr_info attribute_info);
+	//选择语句（无where)
+	void Select_No_Where(string DB_name,string filename,vector<string> attr,attr_info attribute_info);
+//	//选择语句（无where）有索引
+//	void Select_With_Useful_No_Where(string DB_name,string filename,vector<string> attr,vector<recordposition> rp,attr_info attribute_info);
 	//有where，但无可用索引的select语句
 	void Select_Without_Useful_Cond(string DB_name,string filename,vector<string> attr,condition_info cond,attr_info attribute_info);
 	//有where，有索引可用的select语句
@@ -86,9 +86,9 @@ public:
 	//删除语句（无where)
 	void Delete_No_Where(string DB_name,string filename,attr_info attribute_info);
 	//有where,但无可用索引的delete语句,同时返回删除位置
-	vector<recordposition>& Delete_Without_Useful_Cond(string DB_name,string filename,vector<string> attr,condition_info cond,attr_info attribute_info);
+	vector<vector<string>>& Delete_Without_Useful_Cond(string DB_name,string filename,condition_info cond,attr_info attribute_info,vector<string> indexattr);
 	//有where,有可用索引的delete语句,同时返回删除位置
-	vector<recordposition>& Delete_With_Useful_Cond(string DB_name,string filename,vector<string> attr,vector<recordposition> rp,condition_info cond,attr_info attribute_info);
+	vector<vector<string>>& Delete_With_Useful_Cond(string DB_name,string filename,vector<recordposition> rp,condition_info cond,attr_info attribute_info,vector<string> indexattr);
 	//给index提供键的值和位置
 	keyinfo& getkeyinfo(string DB_name, string filename,string keyname,attr_info attribute_info);
     //删除数据库

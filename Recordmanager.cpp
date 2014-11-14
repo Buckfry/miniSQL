@@ -97,13 +97,16 @@ recordposition& RecordManager::insert_record(string DB_name,string filename,vect
      }
 
 
-    int i=fi.recordcount*fi.recordLength;
+    int head=fi.recordcount*fi.recordLength;
     datablock=(*(databuffer.readBlock(filename,(fi.currentblocknum-1))));
-    string data(datablock.data,i);
-
-    for(vector<string>::iterator it=attrvalue.begin(); it!=attrvalue.end();it++,i++)
+    string data(datablock.data,head);
+    int focus_attr=0;
+    for(vector<string>::iterator it=attrvalue.begin(); it!=attrvalue.end();it++,focus_attr++)
     {
     	data+=*it;
+    	for(vector<string>::size_type i=(*it).size();
+    			(int) i< attribute_info.attribute_length[focus_attr];
+    			data+="/0",i++);
     }
 
     fi.recordcount++;
@@ -148,49 +151,59 @@ vector<int>& RecordManager::findposition(vector<string>attr,vector<string>search
     }
     return selected_attr;
 }
-////选择语句（无where）且无索引
-//void RecordManager::Select_Without_Useful_No_Where(string DB_name,string filename,vector<string> attr,attr_info attribute_info)
-//{
-//	this->focus_current_db(DB_name);
-//	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
-//	block datablock;
-//	vector<int> attrnum(findposition(fi.attribute_name,attr));
-//	this->printhead(attr);
-//	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
-//	    {
-//	    	datablock=(*(databuffer.readBlock(filename,searchblock)));
-//	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
-//	    	{
-//	    		vector<char> attrvalue;
-//	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
-//	    		{
-//	    			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
-//	    		}
-//	    		this->Print(attrvalue);
-//	    	}
-//	    }
-//}
-//选择语句（无where）有索引
-void RecordManager::Select_With_Useful_No_Where(string DB_name,string filename,vector<string> attr,vector<recordposition> rp,attr_info attribute_info)
+//选择语句（无where)
+void RecordManager::Select_No_Where(string DB_name,string filename,vector<string> attr,attr_info attribute_info)
 {
 	this->focus_current_db(DB_name);
 	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
-    block datablock;
-    vector<int> attrnum(findposition(fi.attribute_name,attr));
-    this->printhead(attr);
-    for(vector<recordposition>::iterator po=rp.begin();po!=rp.end();po++)
-    {
-    	datablock(*(databuffer.readBlock(filename,(*po).blocknum)));
-
-   		vector<string> attrvalue;
-
-   		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
-   		{
-   			attrvalue.push_back(datablock.data[(*po).recordnum*fi.recordLength+*it]);
-   		}
-    	this->Print(attrvalue);
-    }
+	block datablock;
+	vector<int> attrnum(findposition(fi.attribute_name,attr));
+	this->printhead(attr);
+	for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
+	    {
+	    	datablock=(*(databuffer.readBlock(filename,searchblock)));
+	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
+	    	{
+	    		vector<string> attrvalue;
+	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
+	    		{
+	    			int attrlength=attribute_info.attribute_length[*it];
+	    			int headlength=0;
+	       			for(int n=*it,i=0;n!=0;headlength+=attribute_info.attribute_length[i++],n--);
+	    			string temp1(datablock.data,(searchrecord*fi.recordLength));
+	   	   			string temp2(temp1,headlength,headlength+attrlength);
+	       			attrvalue.push_back(temp2);
+	    		}
+	    		this->Print(attrvalue);
+	    	}
+	    }
 }
+//选择语句（无where）有索引
+//void RecordManager::Select_With_Useful_No_Where(string DB_name,string filename,vector<string> attr,vector<recordposition> rp,attr_info attribute_info)
+//{
+//	this->focus_current_db(DB_name);
+//	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
+//    block datablock;
+//    vector<int> attrnum(findposition(fi.attribute_name,attr));
+//    this->printhead(attr);
+//    for(vector<recordposition>::iterator po=rp.begin();po!=rp.end();po++)
+//    {
+//    	datablock=(*(databuffer.readBlock(filename,(*po).blocknum)));
+//
+//   		vector<string> attrvalue;
+//
+//   		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
+//   		{
+//   			int attrlength=attribute_info.attribute_length[*it];
+//   			int headlength=0;
+//   			for(int n=*it,i=0;n!=0;headlength+=attribute_info.attribute_length[i++],n--);
+//   			string temp1(datablock.data,(((*po).recordnum)*fi.recordLength));
+//   			string temp2(temp1,headlength,headlength+attrlength);
+//   			attrvalue.push_back(temp2);
+//   		}
+//    	this->Print(attrvalue);
+//    }
+//}
 //给index提供keyinfo
 keyinfo& RecordManager::getkeyinfo(string DB_name,string filename,string keyname,attr_info attribute_info)
 {
@@ -209,10 +222,14 @@ keyinfo& RecordManager::getkeyinfo(string DB_name,string filename,string keyname
 	    	datablock(*(databuffer.readBlock(filename,searchblock)));
 	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
 	    	{
-	    		vector<char> attrvalue;
 	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
 	    		{
-	    			key.first=datablock.data[searchrecord*fi.recordLength+*it];
+	    			int attrlength=attribute_info.attribute_length[*it];
+	    			int headlength=0;
+	    			for(int n=*it,i=0;n!=0;headlength+=attribute_info.attribute_length[i++],n--);
+	    			string temp1(datablock.data,searchrecord*fi.recordLength);
+	    			string temp2(temp1,headlength,headlength+attrlength);
+	    			key.first=temp2;
 	    			key.second.blocknum=searchblock;
 	    			key.second.recordnum=searchrecord;
 	    			keys.push_back((key));
@@ -247,7 +264,7 @@ void RecordManager::Delete_No_Where(string DB_name,string filename,attr_info att
     databuffer.updateFileInfo(filename,this->translate_fileinfo(fi));
 }
 //判断是否符合条件condition
-bool RecordManager::Confirm(vector<string> attr,vector<char> attrvalue, condition_info condition)
+bool RecordManager::Confirm(vector<string> attr,vector<string> attrvalue, condition_info condition)
 {
 	 vector<int> conditionattrnum(findposition(attr,condition.conditionattr));
 	 vector<int> conditionattrtypenum(findposition(fi.attribute_name,condition.conditionattr));
@@ -438,10 +455,15 @@ void RecordManager::Select_Without_Useful_Cond(string DB_name,string filename,ve
     	datablock(*(databuffer.readBlock(filename,searchblock)));
     	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
     	{
-    		vector<char> attrvalue;
+    		vector<string> attrvalue;
     		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
     		{
-    			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
+    			int attrlength=attribute_info.attribute_length[*it];
+    			int headlength=0;
+  	       		for(int n=*it,i=0;n!=0;headlength+=attribute_info.attribute_length[i++],n--);
+    		    string temp1(datablock.data,(searchrecord*fi.recordLength));
+    			string temp2(temp1,headlength,headlength+attrlength);
+    			attrvalue.push_back(temp2);
     		}
     		if(this->Confirm(attr,attrvalue,cond))
     		this->Print(attrvalue);
@@ -450,14 +472,14 @@ void RecordManager::Select_Without_Useful_Cond(string DB_name,string filename,ve
 
 }
 //有where,但无可用索引的delete语句
-vector<recordposition>& RecordManager::Delete_Without_Useful_Cond(string DB_name,string filename,vector<string> attr, condition_info cond,attr_info attribute_info)
+vector<vector<string>>& RecordManager::Delete_Without_Useful_Cond(string DB_name,string filename,condition_info cond,attr_info attribute_info,vector<string> indexattr)
 {
 	this->focus_current_db(DB_name);
 	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
-	 recordposition rp;
-	 vector<recordposition> rps;
+	 vector<string> indexvalue;
+	 vector<vector<string>> indexvalues;
 	    block datablock;
-	    vector<int> attrnum(findposition(fi.attribute_name,attr));
+	    vector<int> attrnum(findposition(fi.attribute_name,cond.conditionattr));
 
 
 	    for(int searchblock=0;searchblock!=fi.currentblocknum;searchblock++)
@@ -465,26 +487,34 @@ vector<recordposition>& RecordManager::Delete_Without_Useful_Cond(string DB_name
 	    	datablock(*(databuffer.readBlock(filename,searchblock)));
 	    	for(int searchrecord=0;searchrecord!=fi.recordAmount;searchrecord++)
 	    	{
-	    		vector<char> attrvalue;
+	    		vector<string> attrvalue;
 	    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
 	    		{
-	    			attrvalue.push_back(datablock.data[searchrecord*fi.recordLength+*it]);
+	    			int attrlength=attribute_info.attribute_length[*it];
+	    			int headlength=0;
+	    			for(int n=*it,i=0;n!=0;headlength+=attribute_info.attribute_length[i++],n--);
+	    			string temp1(datablock.data,(searchrecord*fi.recordLength));
+	    			string temp2(temp1,headlength,headlength+attrlength);
+	    			attrvalue.push_back(temp2);
 	    		}
-	    		if(this->Confirm(attr,attrvalue,cond))
+	    		if(this->Confirm(cond.conditionattr,attrvalue,cond))
 	    		{
 	    			for(int i =0; i!=fi.recordLength;i++)
 	    			{
 	    				datablock.data[searchrecord*fi.recordLength+i]="NULL";//已删除的record仍旧占用空间，不更新fileinfo
 	    			}
-	    			rp.blocknum=searchblock;
-	    			rp.recordnum=searchrecord;
-	    			rps.push_back(rp);
+	    			vector<int> indexattrnum(findposition(fi.attribute_name,indexattr));
+	    			for(vector<int>::iterator j=indexattrnum.begin();j!=indexattrnum.end();j++)
+	    			{
+	    				indexvalue.push_back(attrvalue[*j]);
+	    			}
+	    			indexvalues.push_back(indexvalue);
 	    		}
 	    	}
 	        char* p=&(datablock.data);
 	        databuffer.updateBlock(filename,searchblock,p);
 	    }
-	    return rps;
+	    return indexvalues;
 }
 //有where，有索引可用的select语句
 void RecordManager::Select_With_Useful_Cond(string DB_name,string filename,vector<string> attr,vector<recordposition> rp,condition_info cond,attr_info attribute_info)
@@ -498,48 +528,61 @@ void RecordManager::Select_With_Useful_Cond(string DB_name,string filename,vecto
     {
     	datablock(*(databuffer.readBlock(filename,(*po).blocknum)));
 
-   		vector<char> attrvalue;
+   		vector<string> attrvalue;
    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
    		{
-   			attrvalue.push_back(datablock.data[(*po).recordnum*fi.recordLength+*it]);
+   			int attrlength=attribute_info.attribute_length[*it];
+   		    int headlength=0;
+   			for(int n=*it,i=0;n!=0;headlength+=attribute_info.attribute_length[i++],n--);
+   		    string temp1(datablock.data,(((*po).recordnum)*fi.recordLength));
+   		    string temp2(temp1,headlength,headlength+attrlength);
+   			attrvalue.push_back(temp2);
    		}
    		if(this->Confirm(attr,attrvalue,cond))
     	this->Print(attrvalue);
     }
 }
 //有where,有可用索引的delete语句,同时返回删除位置
-vector<recordposition>& RecordManager::Delete_With_Useful_Cond(string DB_name,string filename,vector<string> attr,vector<recordposition> rp,condition_info cond,attr_info attribute_info)
+vector<vector<string>>& RecordManager::Delete_With_Useful_Cond(string DB_name,string filename,vector<recordposition> rp,condition_info cond,attr_info attribute_info,vector<string> indexattr)
 {
 	this->focus_current_db(DB_name);
 	 getfileinfo(databuffer.getFileInfo(filename),attribute_info,filename);
-	 recordposition resultrp;
-	 vector<recordposition> resultrps;
+	 vector<string> indexvalue;
+	 vector<vector<string>> indexvalues;
 	    block datablock;
-	    vector<int> attrnum(findposition(fi.attribute_name,attr));
+	    vector<int> attrnum(findposition(fi.attribute_name,cond.conditionattr));
 
 
 	    for(vector<recordposition>::iterator po=rp.begin();po!=rp.end();po++)
 	    {
-	    	datablock(*(databuffer.readBlock(filename,(*po).blocknum)));
-	   		vector<char> attrvalue;
+	    	datablock=(*(databuffer.readBlock(filename,(*po).blocknum)));
+	   		vector<string> attrvalue;
 	    	for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
 	    	{
-	    		attrvalue.push_back(datablock.data[(*po).recordnum*fi.recordLength+*it]);
+	    		int attrlength=attribute_info.attribute_length[*it];
+	    	    int headlength=0;
+	    		for(int n=*it,i=0;n!=0;headlength+=attribute_info.attribute_length[i++],n--);
+	    		string temp1(datablock.data,(((*po).recordnum)*fi.recordLength));
+	    	    string temp2(temp1,headlength,headlength+attrlength);
+	    		attrvalue.push_back(temp2);
 	    	}
-	    	if(this->Confirm(attr,attrvalue,cond))
+	    	if(this->Confirm(cond.conditionattr,attrvalue,cond))
 	    	{
 	    		for(int i =0; i!=fi.recordLength;i++)
 	    		{
 	    			datablock.data[((*po).recordnum)*fi.recordLength+i]="NULL";//已删除的record仍旧占用空间，不更新fileinfo
 	    		}
-	    		resultrp.blocknum=(*po).blocknum;
-	    		resultrp.recordnum=(*po).recordnum;
-	    		resultrps.push_back(resultrp);
+	    		vector<int> indexattrnum(findposition(fi.attribute_name,indexattr));
+	    	    for(vector<int>::iterator j=indexattrnum.begin();j!=indexattrnum.end();j++)
+	    		{
+	    			indexvalue.push_back(attrvalue[*j]);
+	    		}
+	    		 indexvalues.push_back(indexvalue);
 	    	}
 	       char* p=&(datablock.data);
 	       databuffer.updateBlock(filename,(*po).blocknum,p);
 	   }
-	    return resultrps;
+	    return indexvalues;
 }
 //drop table
 void RecordManager::Drop_Table(string DB_name, string filename)
