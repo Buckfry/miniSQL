@@ -60,7 +60,7 @@ private:
 	//找出所查找的属性在attr中的位置
 	vector<int>& findposition(vector<string> attr,vector<string> searchedattr);
 	//判断是否符合指定条件
-	bool Confirm(vector<string> attr,vector<char> attrvalue,condition_info condition);
+	bool Confirm(vector<string> attr,vector<string> attrvalue,condition_info condition);
 
 public:
 	//构造

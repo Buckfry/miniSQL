@@ -182,7 +182,7 @@ void RecordManager::Select_With_Useful_No_Where(string DB_name,string filename,v
     {
     	datablock(*(databuffer.readBlock(filename,(*po).blocknum)));
 
-   		vector<char> attrvalue;
+   		vector<string> attrvalue;
 
    		for(vector<int>::iterator it=attrnum.begin();it!=attrnum.end();it++)
    		{
