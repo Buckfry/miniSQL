@@ -7,7 +7,7 @@
 
 #ifndef PUBLICHEAD_H_
 #define PUBLICHEAD_H_
-
+#include "BufferManager.h"
 //////////////////////////////////////////////////////////////////
 //catalog
 //class SQL{
@@ -25,6 +25,8 @@
 //	~SQL(){}
 //};
 
+////////////////////////////////////////
+//公共类
 BufferManager datamanager;
 
 class TableInfo{
