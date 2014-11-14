@@ -12,10 +12,10 @@ void Bnode::deleteindex(string value)
 	length = toint(head.substr(8,4));
 	fanout = toint(head.substr(12,4));
 	int position;   //找到子节点块号
-	vector<string> a;
-	vector<string> b;
-	a.push_back("=");
-	b.push_back(value);
+	string a;
+	string b;
+	a = "=";
+	b = value;
 	int value_position;
 	try {
 		index_location& l = search(a, b);

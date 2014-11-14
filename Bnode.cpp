@@ -46,18 +46,16 @@ void Bnode::createindex(int current_length,keyinfo info)
 	}
 }
 
-void Bnode::InserttoIndex(string value, keyinfo info)
+void Bnode::InserttoIndex(string value, recordposition info)
  {
-	for (int i = 0; i < info.keys.size(); i++) {
 		try {
-			string loc = tostring(info.keys[i].second.recordnum);
-			loc += tostring(info.keys[i].second.blocknum);
-			insert_index(info.keys[i].first, loc);
+			string loc = tostring(info.recordnum);
+			loc += tostring(info.blocknum);
+			insert_index(value, loc);
 		} catch (exception & e) {
 			cout << "exception: insert error!!!!!"
 					<< endl;
 		}
-	}
 }
 
 void Bnode::insert_index(string value,string loc)
@@ -438,7 +436,7 @@ index_location Bnode::search(string condition,string value)
 		int j, temp;
 		int value_number = toint(content.substr(1, 3));
 		if (condition.size() == 0)   //表明这是为insert的插入
-				{
+		{
 			for (j = 0; j < value_number; j++) {
 				temp = j * (8 + length) + 20;
 				if (content.substr(temp + 8, length) == value) //表明插入失敗，原值已存在
