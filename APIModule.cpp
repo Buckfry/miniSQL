@@ -7,7 +7,6 @@
 
 
 #include "APIModule.h"
-#include "RecordManager.h"
 #include "Catalog.h"
 #include "publichead.h"
 #include "Recordmanager.h"
@@ -38,25 +37,32 @@ void APIModule(const SQL &sql, string Current_DBname){
     if(sql.method !=NOP){  //没有操作
     	//DATABASE
     	if( sql.method == CREATEDATABASE){
-    		CreateDatabase(sql);
+    		Catalog catalog;
+    		catalog.CreateDatabase(sql);
     	}
 
     	else if (sql.method == DROPDATABASE ){
-    		DropDatabase(sql);
+    		Catalog catalog;
+    		catalog.DropDatabase(sql);
     	}
 
     	else if (sql.method == USEDATABASE){
     		//initBuffer();
     		Current_DBname=sql.targetName;
-    		UseDatabase(sql);
+    		Catalog catalog;
+    		catalog.UseDatabase(sql);
     	}
 
     	else if (sql.method == QUIT){
-
-    		Quit(Current_DBname); //record
+            RecordManager recordmanager;
+            recordmanager.Quit(Current_DBname); //record
     	}
 
     	else if (sql.method == CREATETABLE){
+
+    		RecordManager recordmanager;
+    		Catalog catalog;
+
     		int temp;
     		   for(int i=0; i< sql.isUnique.size(); i++){
     		    	if(sql.isUnique[i]==1){
@@ -76,15 +82,17 @@ void APIModule(const SQL &sql, string Current_DBname){
 
     		keyinfo key;
 
-    		CreateTable(sql , Current_DBname);  //检查有没有抛错即可
+    		catalog.CreateTable(sql , Current_DBname);  //检查有没有抛错即可
     		bnode.createindex(sql.length[temp],key);
-    		create_table(Current_DBname , CR);
+    		recordmanager.create_table(Current_DBname , CR);
     	}
 
     	else if (sql.method == DROPTABLE){
+    		Catalog catalog;
+    		RecordManager recordmanager;
 
     		IndexInfo indexinfo;
-    		indexinfo= DropTable(sql , Current_DBname);  //得到indexinfo 有vector的indexname  传给index
+    		indexinfo= catalog.DropTable(sql , Current_DBname);  //得到indexinfo 有vector的indexname  传给index
 
 
 
@@ -93,15 +101,17 @@ void APIModule(const SQL &sql, string Current_DBname){
     		   bnode.drop_index( indexinfo.indexname[i]);
     	   }
 
-           Drop_Table(Current_DBname , sql.targetName);
+    	   recordmanager.Drop_Table(Current_DBname , sql.targetName);
     	}
 
     	else if (sql.method == CREATEINDEX){
+    		RecordManager recordmanager
+			Catalog catalog;
     		Index index;
-            index = CreateIndex(sql,Current_DBname); //返回attribute的length和类型
+            index = catalog.CreateIndex(sql,Current_DBname); //返回attribute的length和类型
 
     		 keyinfo key;
-    		 key = getkeyinfo(Current_DBname, sql.aux[0],sql.argv[0]);
+    		 key = recordmanager.getkeyinfo(Current_DBname, sql.aux[0],sql.argv[0]);
 
             Bnode bnode(sql.targetName);
     		bnode.createindex(index.length ,key);
@@ -111,7 +121,8 @@ void APIModule(const SQL &sql, string Current_DBname){
     	}
 
     	else if (sql.method == DROPINDEX){
-    		DropIndex(sql.targetName);
+    		Catalog catalog;
+    		catalog.DropIndex(sql.targetName);
     		Bnode bnode(sql.targetName);
     		bnode.drop_index(sql.targetName);// index
     	}
@@ -120,14 +131,16 @@ void APIModule(const SQL &sql, string Current_DBname){
        //TAble
     	else if(tableMethods.count(sql.method)){ //存在这个操作
            if (Current_DBname) {  //在当前database
-              if(findtable(sql.targetName , Current_DBname)){ //存在这个table catalog的函数
+        	   Catalog catalog;
+        	   RecordManager recordmanager;
+              if(catalog.findtable(sql.targetName , Current_DBname)){ //存在这个table catalog的函数
 
 
                 //select
                 //@1 select */attrName from table;  //输出结果如何要问record
                 if(sql.method == SELECTALL){
                    IndexInfo indexinfo;
-                   indexinfo = Select(sql,Current_DBname);
+                   indexinfo = catalog.Select(sql,Current_DBname);
 
                    attr_info attribute_info;
                    attribute_info.attribute_name=indexinfo.table.attrname;
@@ -136,7 +149,7 @@ void APIModule(const SQL &sql, string Current_DBname){
 
 
 
-                  Select_With_Useful_No_Where(Current_DBname,sql.targetName,sql.result,attribute_info);
+                   recordmanager.Select_With_Useful_No_Where(Current_DBname,sql.targetName,sql.result,attribute_info);
 
 
                 }
@@ -144,7 +157,7 @@ void APIModule(const SQL &sql, string Current_DBname){
                 //select */attrName from table where argv operation value;
                 else if(sql.method == SELECTWHERE){
                    IndexInfo indexinfo;
-                   indexinfo = Select(sql,Current_DBname);
+                   indexinfo = catalog.Select(sql,Current_DBname);
 
             	   condition_info coninfo;
             	   coninfo.conditionattr=sql.argv;
@@ -157,7 +170,7 @@ void APIModule(const SQL &sql, string Current_DBname){
 
                    if(indexinfo.indexname.size()==0){
 
-                	  Select_Without_Useful_Cond(Current_DBname , sql.targetName , sql.result,coninfo ,  attribute_info);
+                	   recordmanager.Select_Without_Useful_Cond(Current_DBname , sql.targetName , sql.result,coninfo ,  attribute_info);
                    }
 
                    else{
@@ -174,13 +187,13 @@ void APIModule(const SQL &sql, string Current_DBname){
                          recordposi=bnode.searchbyindex(sql.operators[temp], sql.value[temp]);
                       }
 
-                   Select_With_Useful_Cond(Current_DBname,sql.targetName,sql.result,recordposi ,coninfo ,attribute_info);
+                      recordmanager.Select_With_Useful_Cond(Current_DBname,sql.targetName,sql.result,recordposi ,coninfo ,attribute_info);
                   }
 
                 }
                 else if(sql.method == INSERT){
                 	 IndexInfo  indexinfo;
-                	 indexinfo = Insert(sql,Current_DBname); // 会抛错
+                	 indexinfo = catalog.Insert(sql,Current_DBname); // 会抛错
 
                 	 int temp;
                 	 for(int i=0; i<indexinfo.table.attrtype.size(); i++ ){
@@ -205,7 +218,7 @@ void APIModule(const SQL &sql, string Current_DBname){
                 	 attribute_info.attribute_type=indexinfo.table.type;
                 	 attribute_info.attribute_length=indexinfo.table.length;
 
-                	 rp = insert_record(Current_DBname,sql.targetName,sql.argv,attribute_info);
+                	 rp = recordmanager.insert_record(Current_DBname,sql.targetName,sql.argv,attribute_info);
 
                 	 for(int i=0; i< sql.argv.size(); i++){
                 		 bnode.InserttoIndex(sql.argv[i], rp);
@@ -215,19 +228,19 @@ void APIModule(const SQL &sql, string Current_DBname){
 
                 else if(sql.method == DELETEALL){
                 IndexInfo indexinfo;
-                indexinfo = Delete(sql,Current_DBname);
+                indexinfo = catalog.Delete(sql,Current_DBname);
 
                 attr_info attribute_info;
                 attribute_info.attribute_name=indexinfo.table.attrname;
                 attribute_info.attribute_length=indexinfo.table.length;
                 attribute_info.attribute_type=indexinfo.table.type;
 
-                Delete_No_Where(Current_DBname,sql.targetName,attribute_info);
+                recordmanager.Delete_No_Where(Current_DBname,sql.targetName,attribute_info);
 
                 }
                 else if(sql.method == DELETEWHERE){
                 	IndexInfo indexinfo;
-                    indexinfo = Select(sql,Current_DBname);
+                    indexinfo = catalog.Select(sql,Current_DBname);
 
                 	condition_info coninfo;
                 	coninfo.conditionattr=sql.argv;
@@ -238,11 +251,13 @@ void APIModule(const SQL &sql, string Current_DBname){
                 	attribute_info.attribute_length=indexinfo.table.length;
                 	attribute_info.attribute_type=indexinfo.table.type;
 
-                	vector<recordposition> recordposition;
+                	vector<vector<string>> recordposition;
 
                 	if(indexinfo.indexname.size()==0){
 
-                		recordposition = Delete_Without_Useful_Cond(Current_DBname,sql.targetName, coninfo, attribute_info);
+                      recordposition = recordmanager.Delete_Without_Useful_Cond(Current_DBname,sql.targetName, coninfo, attribute_info);
+
+
                 	 }
 
                 	 else{
@@ -259,8 +274,17 @@ void APIModule(const SQL &sql, string Current_DBname){
                 	               recordposi=bnode.searchbyindex(sql.operators[temp], sql.value[temp]);
                 	         }
 
-                	      recordposition = Delete_With_Useful_Cond(Current_DBname,sql.targetName ,recordposi ,coninfo , attribute_info);
-                	                  }
+                	      recordposition = recordmanager.Delete_With_Useful_Cond(Current_DBname,sql.targetName ,recordposi ,coninfo , attribute_info);
+
+                	      for(int i=0; i<indexinfo.indexname.size(); i++){
+                	    	  Bnode bnode(indexinfo.indexname[i]);
+                	    	  for(int j=0; j< recordposition.size(); i++){
+                	    	    bnode.InserttoIndex(recordposition[j][i]);
+                	    	  }
+                	      }
+                	      }
+
+                	    }
                 }
             }
                 else{
@@ -274,10 +298,12 @@ void APIModule(const SQL &sql, string Current_DBname){
 
     //FILE
         else if(sql.method == EXECFILE){
-            execFile(sql);
+        	Catalog catalog;
+            catalog.execFile(sql);
         }
         else if(sql.method == HELP){
-            helpInfo(sql);
+        	Catalog catalog;
+            catalog.helpInfo(sql);
         }
     }
 	//}
