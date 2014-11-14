@@ -11,7 +11,8 @@
 #include "Buffermanager.h";
 #include "headforBnode.h";
 #include "publichead.h";
-#include<math.h>
+#include <math.h>
+#include <stdlib.h>
 
 using namespace std;
 class Bnode {

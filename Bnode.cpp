@@ -67,6 +67,12 @@ void Bnode::insert_index(string value,string loc)
 	//////////////////
 	fanout = toint(head.substr(12,4));  //扇出数
 	length = toint(head.substr(8,4));   //一个value的长度
+
+	//前面自动补齐
+	string temp;
+	temp.append(length-value.length(),'0');
+	value = temp + value;
+
 	if(head.substr(4,4)=="0000")//第一个叶节点位置为空，此时创建root
 	{
 		string block="1";  //表明这是叶节点
@@ -175,10 +181,6 @@ void Bnode::split(int number,bool isleft)
 	int value_num = toint("0"+content.substr(1,3));  //叶节点中的value个数
 	int father = toint(content.substr(4,4));    //父节点位置
 	int num = fanout/2;
-//	if(isleft)
-//		 num = (fanout-1)/2;
-//	else
-//		num = (fanout-1)/2+(fanout-1)%2;
 	//更新新增的节点
 	newblock="2";
 	newblock+=tostring(fanout-1-num).substr(1,3);
@@ -489,15 +491,18 @@ bool Bnode::showresult(string condition,string input,string value)
 {
 	switch(condition){
 	case "<":
-		return input<value;
+		return atof(input.c_str())<atof(value.c_str());
 	case "<=":
-		return input<=value;
+		return atof(input.c_str())<=atof(value.c_str());
 	case ">":
-		return input>value;
+		return atof(input.c_str())>atof(value.c_str());
 	case ">=":
-		return input>=value;
+		return atof(input.c_str())>=atof(value.c_str());
 	case "<>":
-		return input!=value;
+		return atof(input.c_str())!=atof(value.c_str());
+	default:
+		cout <<"error in showresult" <<endl;
+		throw exception();
 	}
 }
 
