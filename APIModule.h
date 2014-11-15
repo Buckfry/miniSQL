@@ -8,7 +8,10 @@
 #ifndef APIMODULE_H_
 #define APIMODULE_H_
 
-#include "sql.h"
+#include "publichead.h"
+#include <vector>
+#include <string>
+#include <map>
 
 void initAPI();
 void APIModule(const SQL &sql,string Current_DBname);

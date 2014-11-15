@@ -13,6 +13,9 @@
 #include <sstream>
 #include <algorithm>
 #include <cassert>
+#include <string>
+#include <map>
+#include <vector>
 
 
 void initSQL(SQL &sql);

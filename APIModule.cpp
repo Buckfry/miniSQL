@@ -8,10 +8,14 @@
 
 #include "APIModule.h"
 #include "Catalog.h"
-#include "publichead.h"
+#include "sql.h"
 #include "Recordmanager.h"
 #include <iostream>
 #include <algorithm>
+#include <vector>
+#include <string>
+#include <map>
+#include <set>
 
 using namespace std;
 
@@ -105,7 +109,7 @@ void APIModule(const SQL &sql, string Current_DBname){
     	}
 
     	else if (sql.method == CREATEINDEX){
-    		RecordManager recordmanager
+    		RecordManager recordmanager;
 			Catalog catalog;
     		Index index;
             index = catalog.CreateIndex(sql,Current_DBname); //返回attribute的length和类型
