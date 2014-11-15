@@ -76,9 +76,6 @@ void BufferManager::writeBlock(block * w_block){//to disk,not clear buf
     string path=DBname+"/"+w_block->fileName+".txt";
     fstream fout;
     fout.open(path.c_str(),ios::in|ios::out);
-    if(!fout){
-        cout<<"file open fail(write block())"<<endl;
-    }
     fout.seekp(BLOCK_LEN*w_block->blockNum+OFFSET,fout.beg);
     fout.write(w_block->data,BLOCK_LEN);
     fout.close();//not clear buffer
@@ -90,9 +87,6 @@ void BufferManager::Write_File_Info_Disk(fileHead *fileH){//to disk,not clear bu
     string path=DBname+"/"+fileH->filename+".txt";
     fstream fout;
     fout.open(path.c_str(),ios::in|ios::out);
-    if(!fout){
-        cout<<"file open fail(Write_File_Info_Disk())"<<endl;
-    }
     fout.seekp(0,fout.beg);
     fout.write(fileH->fileInfo,OFFSET);
     fout.close();
@@ -103,9 +97,6 @@ void BufferManager::Get_Block_Disk(string File_Name,int blockNum,char data[]){//
     string path=DBname+"/"+File_Name+".txt";
     fstream fin;
     fin.open(path.c_str(),ios::in);
-    if(!fin){
-        cout<<"file open fail(Get_Block_Disk())"<<endl;
-    }
     fin.seekg(OFFSET+BLOCK_LEN*blockNum,fin.beg);
     fin.read(data,BLOCK_LEN);
     fin.close();
@@ -115,9 +106,6 @@ void BufferManager::Get_File_Info_Disk(string File_Name,char getInfo[]){//from d
     string path=DBname+"/"+File_Name+".txt";
     fstream fin;
     fin.open(path.c_str(),ios::in);
-    if(!fin){
-        cout<<"file open fail(Get_File_Info_Disk())"<<endl;
-    }
     fin.seekg(0,fin.beg);
     fin.read(getInfo,OFFSET);
     fin.close();
@@ -224,7 +212,7 @@ void BufferManager::createTable(string tableName,char* fileInfo){
     fstream fcreate;
     fcreate.open(path.c_str(),ios::out);
     if(!fcreate){
-        cout<<tableName<<"create fail!(createTable())"<<endl;
+        cout<<tableName<<"create fail!"<<endl;
         return;}
     fcreate.close();
     this->Write_File_Info_Disk(fileHptr);
