@@ -27,6 +27,8 @@
 
 ////////////////////////////////////////
 //公共类
+
+
 BufferManager datamanager;
 
 class TableInfo{
@@ -84,7 +86,7 @@ public:
 		vector<int> attribute_type;//属性类型
 		vector<int> attribute_length;//属性长度(每个属性的字节数)
 
-
+};
 ////////////////////////////////////////////////////////////////
 enum SqlMethod {
 	NOP,

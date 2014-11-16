@@ -19,8 +19,8 @@ Bnode::~Bnode() {
 
 void Bnode::createindex(int current_length,keyinfo info)
 {
-	string head="0001";//第一个空块位置
-	head+="0000";//第一个叶节点位置
+	string head="1000";//第一个空块位置,前面的1表示空块尚未建立
+	head+="9999";//第一个叶节点位置,此时设为无效
 	head+=tostring(current_length);//value的长度 总长度为value+8
 	fanout = 4096/(current_length+8+20);
 	head+=tostring(fanout);//扇出数
@@ -69,26 +69,38 @@ void Bnode::insert_index(string value,string loc)
 	length = toint(head.substr(8,4));   //一个value的长度
 
 	//前面自动补齐
-	string temp;
-	temp.append(length-value.length(),'0');
-	value = temp + value;
+//	string temp;
+//	temp.append(length-value.length(),'0');
+//	value = temp + value;
+	if(type ==3)
+		{
+			int i = 0;
+			for (i = 0; i < value.length(); i++) {
+				if (value.at(i) == '.')
+					break;
+			}
+			if (i == value.length())
+				value += ".0";
+		}
+	//补齐长度
+	value = value.append(length-value.size(),'0');
 
-	if(head.substr(4,4)=="0000")//第一个叶节点位置为空，此时创建root
+	if(head.substr(4,4)=="9999")//第一个叶节点位置为空，此时创建root
 	{
 		string block="1";  //表明这是叶节点
 		block+="001";  //记录数
-		block+="0000"; //父节点
-		block+="0001"; //块号
+		block+="9999"; //父节点，此时表明该节点即为root
+		block+="0000"; //块号
 		block+="0000";  //下一空块位置，只在空块中和头文件中有用
-		block+="0000"; //下一叶节点块号
+		block+="9999"; //下一叶节点块号，此时表明并无下一叶节点
 		block+=loc;
 		block+=value;
-		block.append(4096-length-8-20,'\0');
+		block.append(4096-length-8-20,'0');
 		char* c = new char(head.length()+1);
 		strcpy(c,block.c_str());
-		datamanager.insertBlock(index_name,1,c);
-		head.replace(4,4,"0001");  //更新第一个叶节点位置
-		head.replace(0,4,"0002");  //更新第一个空块位置
+		datamanager.insertBlock(index_name,0,c);//插入到第0块中
+		head.replace(4,4,"0000");  //更新第一个叶节点位置
+		head.replace(0,4,"1001");  //更新第一个空块位置
 		char* c2 = new char(head.length()+1);
 		strcpy(c2,block.c_str());
 		datamanager.updateFileInfo(index_name,c2);
@@ -98,16 +110,15 @@ void Bnode::insert_index(string value,string loc)
 		int position;
 		/////////////////////
 		//找到块号position
+//		index_location i_location = search("",value);
+//		position = i_location.blocknum;
 		////////////////////
 		string a;
 		string b = value;
-		int temp;
-		bool isleft;
 		try
 		{
 			index_location& l =  search(a,b);
 			position = l.blocknum;
-			temp = l.record_position;
 		}
 		catch(exception& e)
 		{
@@ -116,40 +127,41 @@ void Bnode::insert_index(string value,string loc)
 		}
 		block* blk = datamanager.readBlock(index_name, position);
 		string content = blk->data;
-		if(temp<=toint(content.substr(1,3))/2)
-			isleft =true;
-		else
-			isleft=false;
-		int number = toint("0" + content.substr(1, 3));
+		int number = toint(content.substr(1, 3));
 		if (number < fanout - 1) {					//叶节点未满
 			int start;
 			int num = 0;
 			for (; num < number; num++) {
 				start = num * (length + 8) + 20;
-				if (content.substr(start + 8, length ) > value) {
+				if (showresult(">",content.substr(start + 8, length ),value)) {
+									//content.substr(start + 8, length ) > value
 					break;
 				}
 			}
-			if (num == 0 && (content.substr(4, 4) != "0000")
+			if (num == 0 && (content.substr(4, 4) != "9999")
 					&& head.substr(4, 4) != content.substr(8, 4))//需要更新父节点的value值
 							{
 				int father = toint(content.substr(4, 4));
 				update_value(father, value, content.substr(8, 4)); //更新父节点的value值
 			}
 			string temp = loc + value;
+
+			//插入新值
+			start = num * (length + 8) + 20;
 			content.insert(start, temp);
 			content.replace(1, 3, tostring(number + 1).substr(1,3));
+			content = content.substr(0,4096);
 			strcpy(blk->data, content.c_str());
 			datamanager.updateBlock(index_name, position);
 		} else	//叶节点已满
 		{
-			split(position, isleft);
+			split(position);
 			insert_index(value, loc);
 		}
 	}
 }
 
-void Bnode::split(int number,bool isleft)
+void Bnode::split(int number)  //分裂叶节点
 {
 	block* blk = datamanager.readBlock(index_name,number);
 	string content = blk->data;
@@ -165,39 +177,39 @@ void Bnode::split(int number,bool isleft)
 	{
 		head.replace(0,4,tostring(empty_block_num+1+1000));   //指向下一空块
 		string blank;
-		blank.append(4096,'\0');
-		char* temp;
+		blank.append(4096,'0');
+		char* temp = new char(blank.length()+1);
 		strcpy(temp,blank.c_str());
 		datamanager.insertBlock(index_name,empty_block_num,temp);
 
 		//更新头文件
-		char* headtemp;
+		char* headtemp = new char(head.length()+1);
 		strcpy(headtemp,head.c_str());
 		datamanager.updateFileInfo(index_name,headtemp);
 	}
 	block* empty = datamanager.readBlock(index_name,empty_block_num);
-	string newblock = empty->data;
+	string newblock;
 	string old = content.substr(8,4);  //当前节点块号
-	int value_num = toint("0"+content.substr(1,3));  //叶节点中的value个数
+	int value_num = toint(content.substr(1,3));  //叶节点中的value个数
 	int father = toint(content.substr(4,4));    //父节点位置
-	int num = fanout/2;
+	int num = (fanout-1)/2;
 	//更新新增的节点
 	newblock="2";
 	newblock+=tostring(fanout-1-num).substr(1,3);
 	newblock+="0000";          //暂时赋值，稍后更新
-	newblock+=tostring(empty_block_num);
-	newblock+="0000";
-	newblock+=content.substr(16,4);
+	newblock+=tostring(empty_block_num); //当前块号
+	newblock+="0000";  //下一空块号
+	newblock+=content.substr(16,4); //下一叶节点块号
 	newblock+=content.substr(num*(length+8)+20,content.size()-num*(length+8)+20);
-	newblock.append(4096-newblock.size(),'\0');
+	newblock.append(4096-newblock.size(),'0');
 	strcpy(empty->data,newblock.c_str());
 	datamanager.updateBlock(index_name,empty_block_num);
 
 	//更新当前叶节点
 	content.replace(1,3,tostring(num).substr(1,3));
-	content.replace(16,4,tostring(empty_block_num));
+	content.replace(16,4,tostring(empty_block_num));//更新下一叶节点位置
 	content  = content.substr(0,num*(length+8)+20);
-	content.append(4096-content.size(),'\0');
+	content.append(4096-content.size(),'0');
 	strcpy(blk->data,content.c_str());
 	datamanager.updateBlock(index_name,number);
 
@@ -210,6 +222,7 @@ void Bnode::split(int number,bool isleft)
 }
 
 string Bnode::update(int position,string child,string old,string new_value)  //是否分裂父节点
+//child为新增叶节点块号，old为之前叶节点块号，new_value为新增节点最左的值
 {
 	string head = datamanager.getFileInfo(index_name);
 	int empty_block_num = toint(head.substr(0,4));
@@ -220,23 +233,22 @@ string Bnode::update(int position,string child,string old,string new_value)  //�
 		build = true;
 	}
 
-	if(position==0)    //父节点为空，即之前的节点为根
+	if(position==9999)    //父节点为空，即之前的节点为根
 	{
 		if(build)
 		{
 			head.replace(0, 4, tostring(empty_block_num + 1 + 1000));   //指向下一空块
 			string blank;
-			blank.append(4096, '\0');
-			char* temp;
+			blank.append(4096, '0');
+			char* temp = new char(blank.length()+1);
 			strcpy(temp, blank.c_str());
 			datamanager.insertBlock(index_name, empty_block_num, temp);
 			//更新头文件
-			char* headtemp;
+			char* headtemp = new char(head.length()+1);
 			strcpy(headtemp,head.c_str());
 			datamanager.updateFileInfo(index_name,headtemp);
 		}
-		char *c;
-		block* oldchild = datamanager.readBlock(index_name,toint(old));
+		block* oldchild = datamanager.readBlock(index_name,toint(old));//旧节点
 
 		//把原本占据根节点的节点搬到其他地方去，使得第一块始终为根节点
 		block* empty = datamanager.readBlock(index_name,empty_block_num);
@@ -244,38 +256,41 @@ string Bnode::update(int position,string child,string old,string new_value)  //�
 		if(oldchild->data[0]=='2')  //之前搬运的为第一个叶节点
 		{
 			head.replace(4,4,tostring(empty_block_num));
-			char* headtemp;
+			char* headtemp = new char(head.length()+1);
 			strcpy(headtemp,head.c_str());
 			datamanager.updateFileInfo(index_name,headtemp);
 
 		}
 		string old_child_data= oldchild->data;
-		old_child_data.replace(4,4,"0001");
+		old_child_data.replace(4,4,"0000");
 		strcpy(empty->data,old_child_data.c_str());
-		datamanager.updateBlock(index_name,empty_block_num);
+		datamanager.updateBlock(index_name,empty_block_num);//更新搬运后的节点
 
 
 		//建立根节点
 		string old_child_value = oldchild->data;
 		string root ="1";
 		root +=tostring(2).substr(1,3);
-		root +="0000";  //父节点块号
-		root +="0001";  //当前块号
+		root +="9999";  //父节点块号
+		root +="0000";  //当前块号
 		root +="0000";
 		root +=old;
+		////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////
+		//别忘了要更新根节点的值
+		/////////////////////////////////////////////
 		root +=new_value;
 		root +=child;
-		root.append(4096-root.size(),'\0');
+		root.append(4096-root.size(),'0');
 		strcpy(oldchild->data,root.c_str());
-		datamanager.updateBlock(index_name,1);
-
-		return "0001";
+		datamanager.updateBlock(index_name,0);
+		return "0000";
 	}
 	else
 	{
 		block* father =  datamanager.readBlock(index_name,position);
 		string content = father->data;    //content为当前节点内容
-		int number =  toint("0"+content.substr(1,3));
+		int number =  toint(content.substr(1,3));
 		if(number < fanout - 1)      //节点未满
 		{
 			int i = 0;
@@ -287,14 +302,14 @@ string Bnode::update(int position,string child,string old,string new_value)  //�
 					content.insert(start+4,new_value+child);
 					int temp =number++;
 					content.replace(1,3,tostring(temp).substr(1,3)); //更新记录数
-					content = content.substr(0,4096);
+					content = content.substr(0,4095);
 					strcpy(father->data,content.c_str());		//更新
 					datamanager.updateBlock(index_name,position);
-					if(i==0)        //需要更新父节点的value
-					{
-						update_value(toint(content.substr(4,4)),content.substr(20,length),content.substr(16,4));
-					}
-					return content.substr(4,4);
+//					if(i==0)        //需要更新父节点的value
+//					{
+//						update_value(toint(content.substr(4,4)),content.substr(20,length),content.substr(16,4));
+//					}
+					return content.substr(8,4); //返回父节点块号
 				}
 			}
 		}
@@ -303,49 +318,62 @@ string Bnode::update(int position,string child,string old,string new_value)  //�
 			if (build) {
 				head.replace(0, 4, tostring(empty_block_num + 1 + 1000)); //指向下一空块
 				string blank;
-				blank.append(4096, '\0');
-				char* temp;
+				blank.append(4095, '0');
+				char* temp = new char(blank.length()+1);
 				strcpy(temp, blank.c_str());
 				datamanager.insertBlock(index_name, empty_block_num, temp);
 				//更新头文件
-				char* headtemp;
-				strcpy(headtemp, head.c_str());
+				char headtemp[16];
+				for(int i=0;i<16;i++)
+					headtemp[i]=head.at(i);
+//				strcpy(headtemp, head.c_str());
 				datamanager.updateFileInfo(index_name, headtemp);
 			}
-			int i;
-			int record_num = toint(content.substr(1,3));
-			bool isleft = false;
-			for(i=0;i<record_num;i++)
-			{
-				int start = i*(length+4)+16;
-				if(i>=record_num/2)
-				{
-					break;
-				}
-				else if(content.substr(start,4)==old)
-				{
-					isleft = true;
-					break;
-				}
-			}
-			int num;
-			if (isleft) {
-				num = record_num / 2;
-			} else
-				num = record_num / 2 + record_num%2;
+//			int i;
+//			int record_num = toint(content.substr(1,3));
+//			bool isleft = false;
+//			for(i=0;i<record_num;i++)
+//			{
+//				int start = i*(length+4)+16;
+//				if(i>=record_num/2)
+//				{
+//					break;
+//				}
+//				else if(content.substr(start,4)==old)
+//				{
+//					isleft = true;
+//					break;
+//				}
+//			}
+			int num =(fanout-1)/2;
+//			if (isleft) {
+//				num = record_num / 2;
+//			} else
+//				num = record_num / 2 + record_num%2;
 			////////////////////////////////////////
 //			head.replace(0, 4, newblock.substr(12, 16));
-
-
 			//更新新增的节点
 			string newblock = "1";
 			newblock += tostring(fanout - 1 - num).substr(1, 3);
 			newblock += "0000";          //暂时赋值，稍后更新
 			newblock += tostring(empty_block_num);
 			newblock += "0000";
+			int i = 0;
+			for (; i < number; i++) {
+				int start = i * (length + 4) + 16;
+				if (content.substr(start, 4) == old) {
+					content.insert(start + 4, new_value + child);
+					int temp = number++;
+//					content.replace(1, 3, tostring(temp).substr(1, 3)); //更新记录数
+//					content = content.substr(0, 4095);
+//					strcpy(father->data, content.c_str());		//更新
+//					datamanager.updateBlock(index_name, position);
+				}
+			}
+			newblock += content.substr(num * (length + 4) + 16+4, content.size()-num * (length + 4) + 16+4);  //搬过去！
 			newblock +=child;
 			newblock +=new_value;
-			newblock += content.substr(num * (length + 4) + 16+4, content.size()-num * (length + 4) + 16+4);  //搬过去！
+
 			newblock.append(4096 - newblock.size(), '\0');
 
 
@@ -402,17 +430,32 @@ index_location Bnode::search(string condition,string value)
 {
 	string head = datamanager.getFileInfo(index_name);
 	length = toint(head.substr(8,4));
-	if(head.substr(4,4)=="0000")
+	//第一个叶节点位置不存在
+	if(head.substr(4,4)=="9999")
 	{
 		throw not_found();
 	}
-	int blocknum=0; //第几块
-	int number=0;  //具体位置
-	vector<string> record_postion; //指针
+
+	if(type ==3)
+	{
+		int i = 0;
+		for (i = 0; i < value.length(); i++) {
+			if (value.at(i) == '.')
+				break;
+		}
+		if (i == value.length())
+			value += ".0";
+	}
+	//补齐长度
+	value = value.append(length-value.size(),'0');
+
+	int blocknum=0; //在index中的第几块
+	int number=0;  //在index中具体位置
+	vector<string> record_postion; //记录指针
 
 	if (condition.size() == 0 || condition == "=")    //搜索为=时
 	{
-		block* blk = datamanager.readBlock(index_name, 1);
+		block* blk = datamanager.readBlock(index_name, 0); //从根节点开始找
 		string content = blk->data;
 		while (content[0] == '1')  //为非叶节点时
 		{
@@ -420,17 +463,18 @@ index_location Bnode::search(string condition,string value)
 			int j, temp;
 			for (j = 0; j < value_number; j++) {
 				temp = j * (length + 4) + 16;
-				if (content.substr(temp + 4, length) > value) {
+				if (showresult(">",content.substr(temp + 4, length),value)) {//content.substr(temp + 4, length) > value
 					blk = datamanager.readBlock(index_name,
 							toint(content.substr(temp, 4)));
 					content = blk->data;
 					break;
 				}
-			}
-			if (j == value_number) {
-				blk = datamanager.readBlock(index_name,
-						toint(content.substr(temp + 4 + length, 4)));
-				content = blk->data;
+				else if(content.substr(temp + 4, length) == value)
+				{
+					blk = datamanager.readBlock(index_name,toint(content.substr(temp+4+length,4)));
+					content = blk->data;
+					break;
+				}
 			}
 		}
 
@@ -443,8 +487,8 @@ index_location Bnode::search(string condition,string value)
 				temp = j * (8 + length) + 20;
 				if (content.substr(temp + 8, length) == value) //表明插入失敗，原值已存在
 					throw insert_index_error();         //抛出异常
-				if (content.substr(temp + 8, length) > value) {
-					break;
+				if (showresult(">",content.substr(temp + 8, length),value)) {
+					break;//content.substr(temp + 8, length) > value
 				}
 			}
 			number = j;
@@ -468,15 +512,15 @@ index_location Bnode::search(string condition,string value)
 	} else       //非等值查询
 	{
 		int leaf_num = toint(head.substr(4, 4));
-		while (leaf_num != 0) {
+		while (leaf_num != 9999) { //
 			block* blk = datamanager.readBlock(index_name, leaf_num);
 			string content = blk->data;
 			int j, temp;
 			int value_number = toint(content.substr(1, 3));
 			for (j = 0; j < value_number; j++) {
 				temp = j * (8 + length) + 20;
-				if (showresult(condition, value,
-						content.substr(temp + 8, length))) {
+				if (showresult(condition,
+						content.substr(temp + 8, length),value)) {
 					record_postion.push_back(content.substr(temp, 8));
 				}
 			}
@@ -491,15 +535,30 @@ bool Bnode::showresult(string condition,string input,string value)
 {
 	switch(condition){
 	case "<":
-		return atof(input.c_str())<atof(value.c_str());
+		if(type == 1) //为char的时候
+			return input<value;
+		else
+			return atof(input.c_str())<atof(value.c_str());
 	case "<=":
-		return atof(input.c_str())<=atof(value.c_str());
+		if(type ==1)
+			return input <= value;
+		else
+			return atof(input.c_str())<=atof(value.c_str());
 	case ">":
-		return atof(input.c_str())>atof(value.c_str());
+		if(type == 1)
+			return input > value;
+		else
+			return atof(input.c_str())>atof(value.c_str());
 	case ">=":
-		return atof(input.c_str())>=atof(value.c_str());
+		if(type==1)
+			return input >=value;
+		else
+			return atof(input.c_str())>=atof(value.c_str());
 	case "<>":
-		return atof(input.c_str())!=atof(value.c_str());
+		if(type==1)
+			return input !=value;
+		else
+			return atof(input.c_str())!=atof(value.c_str());
 	default:
 		cout <<"error in showresult" <<endl;
 		throw exception();
